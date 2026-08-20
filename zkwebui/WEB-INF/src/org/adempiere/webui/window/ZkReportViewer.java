@@ -215,9 +215,13 @@ public class ZkReportViewer extends Window implements EventListener {
 		this.setAuService(new GlobalCommandDispatcher(this));
 
 		Borderlayout layout = new Borderlayout();
-		layout.setStyle("position: absolute; height: 99%; width: 99%");
+		layout.setHflex("1");
+		layout.setVflex("1");
+		layout.setStyle("margin:0; padding:0;");
 		this.appendChild(layout);
-		this.setStyle("width: 100%; height: 100%; position: absolute");
+		this.setHflex("1");
+		this.setVflex("1");
+		this.setStyle("margin:0; padding:0;");
 
 		toolBar.setHeight("100%");
 		
@@ -888,7 +892,7 @@ public class ZkReportViewer extends Window implements EventListener {
 			winExportFile.setWidth("450px");
 			winExportFile.setClosable(true);
 			winExportFile.setBorder("normal");
-			winExportFile.setStyle("position:absolute");
+			winExportFile.setStyle("margin:0; padding:0;");
 
 			cboType.setMold("select");
 			

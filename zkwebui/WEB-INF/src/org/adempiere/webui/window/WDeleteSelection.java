@@ -57,6 +57,8 @@ public class WDeleteSelection extends DeleteSelectionController implements Event
 	private Listbox listbox;
 	/**	Confirm Panel	*/
 	private ConfirmPanel confirmPanel;
+	/** Listener ejecutado después de confirmar la selección */
+	private EventListener confirmationListener;
 
 	/**
 	 * Init components
@@ -129,13 +131,39 @@ public class WDeleteSelection extends DeleteSelectionController implements Event
 	}
 
 	@Override
-	public void onEvent(Event event) throws Exception {
-		if(event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_CANCEL)) {
-			container.detach();
-		} else if(event.getTarget() == confirmPanel.getOKButton()) {
-			setSelection(listbox.getSelectedIndices());
-			setIsOkPressed(true);
-			container.detach();
-		}
+	public void onEvent(Event event) throws Exception
+	{
+	    if (event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_CANCEL))
+	    {
+	        container.detach();
+	    }
+	    else if (event.getTarget() == confirmPanel.getOKButton())
+	    {
+	        setSelection(listbox.getSelectedIndices());
+	        setIsOkPressed(true);
+
+	        Event confirmationEvent = new Event(
+	                Events.ON_OK,
+	                container,
+	                getSelection());
+
+	        container.detach();
+
+	        if (confirmationListener != null)
+	        {
+	            confirmationListener.onEvent(confirmationEvent);
+	        }
+	    }
+	}
+	
+	/**
+	 * Muestra el diálogo y notifica asincrónicamente cuando se confirma.
+	 *
+	 * @param listener listener que recibe Events.ON_OK
+	 */
+	public void showDialog(EventListener listener)
+	{
+	    confirmationListener = listener;
+	    showDialog();
 	}
 }

@@ -130,9 +130,13 @@ public class SMJReportViewer extends Window implements EventListener {
 			 */
 			private void init() {
 				Borderlayout layout = new Borderlayout();
-				layout.setStyle("position: absolute; height: 99%; width: 99%");
+				layout.setHflex("1");
+				layout.setVflex("1");
+				layout.setStyle("margin:0; padding:0;");
 				this.appendChild(layout);
-				this.setStyle("width: 100%; height: 100%; position: absolute");
+				this.setHflex("1");
+				this.setVflex("1");
+				this.setStyle("margin:0; padding:0;");
 
 				//-------------Toolbar -------------
 				toolBar.setHeight("26px");

@@ -104,13 +104,15 @@ public class ADWindowPanel extends AbstractADWindowPanel
 	protected Component doCreatePart(Component parent)
     {
         layout = new Borderlayout();
+        layout.setStyle("margin:0; padding:0;");
         if (parent != null) {
 	        layout.setParent(parent);
-	        layout.setStyle("position:absolute");
-	        layout.setHeight("100%");
-	        layout.setWidth("100%");
+	        layout.setHflex("1");
+	        layout.setVflex("1");
         } else {
         	layout.setPage(page);
+        	layout.setWidth("100%");
+        	layout.setHeight("100%");
         }
 
         if (!isEmbedded())
@@ -147,6 +149,7 @@ public class ADWindowPanel extends AbstractADWindowPanel
     	        layout.appendChild(west);
     	        west.setSplittable(false);
     	        west.setAutoscroll(true);
+    	        west.setWidth("120px");
     	        LayoutUtils.addSclass("adwindow-nav adwindow-left-nav", west);
     	        adTab.setTabplacement(IADTab.LEFT);
     	        adTab.getTabSelectionComponent().setParent(west);
@@ -163,6 +166,7 @@ public class ADWindowPanel extends AbstractADWindowPanel
 		        layout.appendChild(east);
 		        east.setSplittable(false);
 		        east.setAutoscroll(true);
+		        east.setWidth("120px");
 		        LayoutUtils.addSclass("adwindow-nav adwindow-right-nav", east);
 		        adTab.setTabplacement(IADTab.RIGHT);
 		        adTab.getTabSelectionComponent().setParent(east);
@@ -178,6 +182,8 @@ public class ADWindowPanel extends AbstractADWindowPanel
 
         contentArea = new Center();
         contentArea.setParent(layout);
+        contentArea.setHflex("1");
+        contentArea.setVflex("1");
         contentArea.setAutoscroll(true);
         adTab.createPart(contentArea);
 

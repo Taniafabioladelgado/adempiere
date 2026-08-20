@@ -146,36 +146,66 @@ public class WSearch
 	}	//	fillPopup
 	
 	/**
-	 * Open the FindWindow dialog and record the resulting query;
+	 * Abre FindWindow, registra previamente el callback
+	 * y aplica la consulta resultante.
 	 */
 	private void find() {
-		final FindWindow find = new FindWindow(
-			targetWindowNo,
-			title,
-			tableId,
-			tableName,
-			whereExtended,
-			findFields,
-			1,
-			tabId
-		);
 
-		find.setFindWindowListener(new FindWindow.FindWindowListener() {
-			@Override
-			public void onClose(MQuery query, boolean isCancel, boolean isCreateNew) {
-				log.warning("-----------> WSearch.find: CALLBACK FindWindow [" + targetWindowNo + "]");
-				log.warning("-----------> WSearch.find: isCancel=" + isCancel + " [" + targetWindowNo + "]");
-				log.warning("-----------> WSearch.find: isCreateNew=" + isCreateNew + " [" + targetWindowNo + "]");
-				log.warning("-----------> WSearch.find: query=" + query + " [" + targetWindowNo + "]");
+	    final FindWindow find = new FindWindow(
+	        targetWindowNo,
+	        title,
+	        tableId,
+	        tableName,
+	        whereExtended,
+	        findFields,
+	        1,
+	        tabId
+	    );
 
-				if (!isCancel) {
-					if (isCreateNew) {
-						windowPanel.onNew();
-					} else {
-						windowPanel.onFindCallback(query);
-					}
-				}
-			}
-		});
+	    /*
+	     * El listener debe quedar registrado antes de mostrar FindWindow.
+	     * Esto es especialmente importante cuando la búsqueda se abre
+	     * automáticamente durante ADWindowPanel.initPanel().
+	     */
+	    find.setFindWindowListener(new FindWindow.FindWindowListener() {
+	        @Override
+	        public void onClose(
+	                MQuery query,
+	                boolean isCancel,
+	                boolean isCreateNew) {
+
+	            log.warning(
+	                "-----------> WSearch.find: CALLBACK FindWindow ["
+	                + targetWindowNo + "]"
+	            );
+	            log.warning(
+	                "-----------> WSearch.find: isCancel="
+	                + isCancel + " [" + targetWindowNo + "]"
+	            );
+	            log.warning(
+	                "-----------> WSearch.find: isCreateNew="
+	                + isCreateNew + " [" + targetWindowNo + "]"
+	            );
+	            log.warning(
+	                "-----------> WSearch.find: query="
+	                + query + " [" + targetWindowNo + "]"
+	            );
+
+	            if (isCancel) {
+	                return;
+	            }
+
+	            if (isCreateNew) {
+	                windowPanel.onNew();
+	            } else {
+	                windowPanel.onFindCallback(query);
+	            }
+	        }
+	    });
+
+	    /*
+	     * FindWindow se muestra solamente después de registrar el callback.
+	     */
+	    find.open();
 	}
 }	//	WSwearch

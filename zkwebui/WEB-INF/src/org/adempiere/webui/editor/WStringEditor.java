@@ -171,7 +171,9 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 				WRecordInfo.addMenu(popupMenu);
 			}
 
-	        getComponent().setContext(popupMenu.getId());
+	        //getComponent().setContext(popupMenu.getId());
+	        // Referencia directa para conservar la posición del puntero en ZK 8.6
+	        getComponent().setContext(popupMenu);
 
 	        if (gridField.isAutocomplete()) {
 	            Combobox combo = (Combobox) getComponent();

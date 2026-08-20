@@ -17,22 +17,6 @@
 
 package org.adempiere.webui.panel;
 
-/******************************************************************************
- * Product: Adempiere ERP & CRM Smart Business Solution                       *
- * Copyright (C) 1999-2006 ComPiere, Inc. All Rights Reserved.                *
- * This program is free software; you can redistribute it and/or modify it    *
- * under the terms version 2 of the GNU General Public License as published   *
- * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
- * See the GNU General Public License for more details.                       *
- * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
- * For the text or an alternative of this public license, you may reach us    *
- * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
- * or via info@compiere.org or http://www.compiere.org/license.html           *
- *****************************************************************************/
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -87,6 +71,10 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.North;
+import org.zkoss.zul.Listcell;
+import org.zkoss.zul.Listhead;
+import org.zkoss.zul.Listheader;
+import org.zkoss.zul.Listitem;
 
 /**
  * Search Product and return selection
@@ -107,6 +95,8 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 	 */
 	private static final long serialVersionUID = 6804975825156657866L;
 	private int fieldID = 0;
+	/** Initial lookup text. It searches the direct-access product fields as one condition. */
+	private String initialSearchText;
 	private Label lblBlank = new Label();
 	private Label lblValue = new Label();
 	private Textbox fieldValue = new Textbox();
@@ -404,6 +394,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 
 		Row row = new Row();
 		rows.appendChild(row);
+		//row.setSpans("1, 1, 1, 1, 1, 1");
 		row.appendChild(lblValue.rightAlign());
 		row.appendChild(fieldValue);
 		row.appendChild(lblWarehouse.rightAlign());
@@ -413,24 +404,28 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 
 		row = new Row();
 		rows.appendChild(row);
+		//row.setSpans("1, 1, 1, 1, 1, 1");
 		row.appendChild(lblName.rightAlign());
 		row.appendChild(fieldName);
 		row.appendChild(lblPriceList.rightAlign());
 		row.appendChild(fPriceList_ID.getComponent());
 		row.appendChild(lblAS.rightAlign());
 		row.appendChild(fAS_ID.getComponent());
+		//
 
 		row = new Row();
 		rows.appendChild(row);
+		//row.setSpans("1, 1, 1, 1, 1, 1");
 		row.appendChild(lblUPC.rightAlign());
 		row.appendChild(fieldUPC);
 		row.appendChild(lblProductCategory.rightAlign());
 		row.appendChild(fProductCategory_ID.getComponent());
 		row.appendChild(lblASI.rightAlign());
 		row.appendChild(fASI_ID.getComponent());
-
+		
 		row = new Row();
 		rows.appendChild(row);
+		//row.setSpans("1, 1, 1, 1, 1, 1");
 		row.appendChild(lblSKU.rightAlign());
 		row.appendChild(fieldSKU);
 		row.appendChild(lblVendor.rightAlign());
@@ -439,14 +434,46 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		row.appendChild(checkAND);
 		
 		//
-        ColumnInfo[] s_layoutWarehouse = new ColumnInfo[]{
+        /*ColumnInfo[] s_layoutWarehouse = new ColumnInfo[]{
         		new ColumnInfo(" ", "M_Warehouse_ID", IDColumn.class),
         		new ColumnInfo(Msg.translate(Env.getCtx(), "WarehouseName"), "WarehouseName", String.class),
-        		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "sum(QtyAvailable)", Double.class, true, true, null),
-        		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOnHand"), "sum(QtyOnHand)", Double.class),
-           		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyReserved"), "sum(QtyReserved)", Double.class),
-           		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOrdered"), "sum(QtyOrdered)", Double.class)};
-//        		new ColumnInfo(Msg.translate(Env.getCtx(), "DocumentNote"), "DocumentNote", String.class)};
+        		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "sum(QtyAvailable)", String.class, true, true, null),
+        		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOnHand"), "sum(QtyOnHand)", String.class),
+           		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyReserved"), "sum(QtyReserved)", String.class),
+           		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOrdered"), "sum(QtyOrdered)", String.class)};
+//        		new ColumnInfo(Msg.translate(Env.getCtx(), "DocumentNote"), "DocumentNote", String.class)};*/
+        
+        ColumnInfo[] s_layoutWarehouse = new ColumnInfo[] {
+        	    new ColumnInfo(" ", "M_Warehouse_ID", IDColumn.class),
+        	    new ColumnInfo(Msg.translate(Env.getCtx(), "WarehouseName"), "WarehouseName", String.class),
+
+        	    new ColumnInfo(
+        	    	    Msg.translate(Env.getCtx(), "QtyAvailable"),
+        	    	    "REPLACE(to_char(COALESCE(sum(QtyAvailable),0), 'FM999G999G999G990'), '.', ',')",
+        	    	    String.class
+        	    	),
+
+        	    	new ColumnInfo(
+        	    	    Msg.translate(Env.getCtx(), "QtyOnHand"),
+        	    	    "REPLACE(to_char(COALESCE(sum(QtyOnHand),0), 'FM999G999G999G990'), '.', ',')",
+        	    	    String.class
+        	    	),
+
+        	    	new ColumnInfo(
+        	    	    Msg.translate(Env.getCtx(), "QtyReserved"),
+        	    	    "REPLACE(to_char(COALESCE(sum(QtyReserved),0), 'FM999G999G999G990'), '.', ',')",
+        	    	    String.class
+        	    	),
+
+        	    	new ColumnInfo(
+        	    	    Msg.translate(Env.getCtx(), "QtyOrdered"),
+        	    	    "REPLACE(to_char(COALESCE(sum(QtyOrdered),0), 'FM999G999G999G990'), '.', ',')",
+        	    	    String.class
+        	    	)
+
+        	};
+
+        
         /**	From Clause							*/
         String s_sqlFrom = " M_PRODUCT_STOCK_V ";
         /** Where Clause						*/
@@ -458,6 +485,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		warehouseTbl.setMultiSelection(false);
         warehouseTbl.autoSize();
         warehouseTbl.setShowTotals(true);
+
         //warehouseTbl.getModel().addTableModelListener(this);
         warehouseTbl.setAttribute("zk_component_ID", "Lookup_Data_Warehouse");
 		
@@ -536,7 +564,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		desktopTabPanel.appendChild(warehouseTbl);
 		tabPanels.appendChild(desktopTabPanel);
 
-		tab = new Tab(Msg.translate(Env.getCtx(), "Description"));
+		/*tab = new Tab(Msg.translate(Env.getCtx(), "Description"));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
@@ -544,9 +572,9 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		fieldDescription.setWidth("99%");
 		fieldDescription.setHeight("99%");
 		desktopTabPanel.appendChild(fieldDescription);
-		tabPanels.appendChild(desktopTabPanel);
+		tabPanels.appendChild(desktopTabPanel);*/
 
-		tab = new Tab(Msg.translate(Env.getCtx(), "ProductAttribute"));
+		/*tab = new Tab(Msg.translate(Env.getCtx(), "ProductAttribute"));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
@@ -554,25 +582,25 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		fieldPAttributes.setWidth("99%");
 		fieldPAttributes.setHeight("99%");
 		desktopTabPanel.appendChild(fieldPAttributes);
-		tabPanels.appendChild(desktopTabPanel);
+		tabPanels.appendChild(desktopTabPanel);*/
 		 
-		tab = new Tab(Msg.translate(Env.getCtx(), "Substitute_ID"));
+		/*tab = new Tab(Msg.translate(Env.getCtx(), "Substitute_ID"));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
 		desktopTabPanel.setHeight("100%");
 		desktopTabPanel.appendChild(substituteTbl);
-		tabPanels.appendChild(desktopTabPanel);
+		tabPanels.appendChild(desktopTabPanel);*/
 
-		tab = new Tab(Msg.translate(Env.getCtx(), "RelatedProduct_ID"));
+		/*tab = new Tab(Msg.translate(Env.getCtx(), "RelatedProduct_ID"));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
 		desktopTabPanel.setHeight("100%");
 		desktopTabPanel.appendChild(relatedTbl);
-		tabPanels.appendChild(desktopTabPanel);
+		tabPanels.appendChild(desktopTabPanel);*/
 
-		tab = new Tab(Msg.getMsg(Env.getCtx(), "ATP"));
+		tab = new Tab(Msg.translate(Env.getCtx(), "M_Locator_ID"));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
@@ -580,13 +608,13 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		desktopTabPanel.appendChild(m_tableAtp);		
 		tabPanels.appendChild(desktopTabPanel);
 
-		tab = new Tab(Util.cleanAmp(Msg.translate(Env.getCtx(), "Vendor")));
+		/*tab = new Tab(Util.cleanAmp(Msg.translate(Env.getCtx(), "Vendor")));
 		tab.addEventListener(Events.ON_SELECT, this);
 		tabs.appendChild(tab);
 		desktopTabPanel = new Tabpanel();
 		desktopTabPanel.setHeight("100%");
 		desktopTabPanel.appendChild(vendorTbl);
-		tabPanels.appendChild(desktopTabPanel);
+		tabPanels.appendChild(desktopTabPanel);*/
 
 		tabs.setAttribute("zk_component_ID", "Subordinate_Tabs");
 
@@ -635,6 +663,59 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		});
 
 	}
+	
+	private void applyWarehouseTableStyle() {
+
+	    // ===== HEADER =====
+	    Listhead head = warehouseTbl.getListhead();
+	    if (head != null) {
+	        for (Object o : head.getChildren()) {
+	            if (o instanceof Listheader) {
+	                Listheader h = (Listheader) o;
+
+	                h.setStyle(
+	                    "border-right:1px solid #e0e0e0;" +
+	                    "border-bottom:1px solid #cfd8dc;" +
+	                    "text-align:left;" +
+	                    "padding-left:6px;"
+	                );
+	            }
+	        }
+	    }
+	 // ===== FILAS / CELDAS =====
+	    for (Object it : warehouseTbl.getItems()) {
+	        if (!(it instanceof Listitem)) continue;
+
+	        Listitem item = (Listitem) it;
+
+	        for (Object c : item.getChildren()) {
+	            if (!(c instanceof Listcell)) continue;
+
+	            Listcell cell = (Listcell) c;
+
+	            cell.setStyle(
+	                "text-align:left !important;" +
+	                "border-right:1px solid #e0e0e0;" +
+	                "border-bottom:1px solid #cfd8dc;" +
+	                "padding-left:6px;"
+	            );
+
+	            if (cell.getFirstChild() instanceof org.zkoss.zk.ui.HtmlBasedComponent) {
+	                org.zkoss.zk.ui.HtmlBasedComponent inner =
+	                    (org.zkoss.zk.ui.HtmlBasedComponent) cell.getFirstChild();
+
+	                inner.setStyle("display:block; width:100%; text-align:left !important;");
+	            }
+	        }
+	    }
+
+
+
+
+	    // ===== BORDE EXTERNO =====
+	    warehouseTbl.setStyle("border:1px solid #cfd8dc !important;");
+	}
+
 
 	/**
 	 * 	Refresh Query
@@ -682,7 +763,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				}
 			}
 			
-			if (detailTabBox.getSelectedIndex() == 0 || detailTabBox.getSelectedIndex() == 5)
+			if (detailTabBox.getSelectedIndex() == 0 || detailTabBox.getSelectedIndex() == 1)
 			{
 				if (queryWarehouse)
 				{
@@ -696,6 +777,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 						pstmt.setInt(1, m_M_Product_ID);
 						rs = pstmt.executeQuery();
 						warehouseTbl.loadTable(rs);
+						applyWarehouseTableStyle();
 						rs.close();
 					}
 					catch (Exception e)
@@ -737,7 +819,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 
 			}
 			
-	    	if(detailTabBox.getSelectedIndex() == 1)
+	    	/*if(detailTabBox.getSelectedIndex() == 1)
 			{
 	    		fieldDescription.setText("");
 				//  Description tab
@@ -756,9 +838,9 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				}
 				else
 					fieldDescription.setText("");
-			}
+			}*/
 			
-	    	if(detailTabBox.getSelectedIndex() == 2)
+	    	/*if(detailTabBox.getSelectedIndex() == 2)
 			{
 	    		fieldPAttributes.setText("");
 	    		StringBuffer paText = new StringBuffer();
@@ -886,7 +968,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				}
 			}
 
-	    	if(detailTabBox.getSelectedIndex() == 3)
+	    	/*if(detailTabBox.getSelectedIndex() == 3)
 			{
 				//  Substitute tab
 				sql = m_sqlSubstitute;
@@ -928,9 +1010,9 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 					DB.close(rs, pstmt);
 					rs = null; pstmt = null;
 				}
-			}
+			}*/
 	    	
-	    	if(detailTabBox.getSelectedIndex() == 5)		
+	    	if(detailTabBox.getSelectedIndex() == 1)		
 			{
 	    		if (warehouseTbl.getRowCount() > 0)
 	    			refreshAtpTab();
@@ -940,7 +1022,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 	    		}
 			}
 	    	
-	    	if(detailTabBox.getSelectedIndex() == 6)
+	    	/*if(detailTabBox.getSelectedIndex() == 6)
 			{
 				//  Vendor tab
 				sql = m_sqlVendor;
@@ -959,7 +1041,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 					DB.close(rs, pstmt);
 					rs = null; pstmt = null;
 				}
-			}
+			}*/
 
 		//}});
 	}	//	refresh
@@ -1009,8 +1091,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
         if (!(record_id == 0))  // A record is defined
         {
         	fieldID = record_id;
-        	fWarehouse_ID.setValue(Integer.valueOf(M_Warehouse_ID).intValue());
-        	fPriceList_ID.setValue(findPLV(M_PriceList_ID));
+	        	applyWarehouseAndPriceListContext(M_Warehouse_ID, M_PriceList_ID);
 
         } 
         else
@@ -1027,18 +1108,13 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				}
 				else
 				{
-					fieldValue.setText(value);
-					fieldName.setText(value);
-					fieldUPC.setText(value);
-					fieldSKU.setText(value);
+					// Keep criteria visible and unambiguous; the term is applied as one
+					// grouped search across code, name, UPC/EAN and SKU/UA.
+					initialSearchText = value;
 				}
-				//
-				fWarehouse_ID.setValue(0);
-	        	//
-	        	fPriceList_ID.setValue(0);
 	        	//
 	        	checkAND.setSelected(false); //  Use OR
-	        	
+	        		        	
 			}
 			else
 			{
@@ -1050,43 +1126,19 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 					fieldID = Integer.valueOf(id).intValue();
 				}
 				
-				id = Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "M_PriceList_Version_ID", true);
-				if (id != null && id.length() != 0 && (Integer.valueOf(id).intValue() > 0)) {
-					fPriceList_ID.setValue(Integer.valueOf(id).intValue());
-				}
-				else
-				{	
-						//  OK - make a good guess
-						fPriceList_ID.setValue(findPLV(M_PriceList_ID));
-				}
-
-				//  M_Warehouse_ID - general context
-				if(M_Warehouse_ID == 0)
-				{
-					id = Env.getContext(Env.getCtx(), "#M_Warehouse_ID");
-					if (id != null && id.length() != 0 && (Integer.valueOf(id).intValue() > 0)) {
-						fWarehouse_ID.setValue(Integer.valueOf(id).intValue());
-					}
-					else 
-					{
-						id = Env.getContext(Env.getCtx(), p_WindowNo, "M_Warehouse_ID");
-						if (id != null && id.length() != 0 && (Integer.valueOf(id).intValue() > 0)) {
-							fWarehouse_ID.setValue(Integer.valueOf(id).intValue());
-						}
-					}
-				}
-				else
-				{
-					fWarehouse_ID.setValue(Integer.valueOf(M_Warehouse_ID).intValue());
-				}
-				
-				id = Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "C_BPartner_ID", false);
-				boolean isSOTrx = "Y".equals(Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "IsSOTrx", false));
-				if (id != null && id.length() != 0 && (Integer.valueOf(id).intValue() > 0) && !isSOTrx) {
-					fVendor_ID.setValue(Integer.valueOf(id).intValue());
-				}
+				//jleyton AJAH no default vendor
+//				id = Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "C_BPartner_ID", false);
+//				boolean isSOTrx = "Y".equals(Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "IsSOTrx", false));
+//				if (id != null && id.length() != 0 && (Integer.valueOf(id).intValue() > 0) && !isSOTrx) {
+//					//fVendor_ID.setValue(Integer.valueOf(id).intValue());
+//				}
 			}
 		}
+
+		// Keep the caller context when the search starts with text as well. Product
+		// searches are shared by sales orders, invoices and POS; clearing these values
+		// for non-unique text made the first search behave differently from the next one.
+		applyWarehouseAndPriceListContext(M_Warehouse_ID, M_PriceList_ID);
 
 		if (!isValidVObject(fWarehouse_ID))
 		{
@@ -1097,6 +1149,33 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		else
 			checkOnlyStock.setEnabled(true);
 	}	//	initInfo
+
+	/** Apply the standard product-search warehouse and price-list context. */
+	private void applyWarehouseAndPriceListContext(int M_Warehouse_ID, int M_PriceList_ID)
+	{
+		String id = Env.getContext(Env.getCtx(), p_WindowNo, p_TabNo, "M_PriceList_Version_ID", true);
+		if (id != null && id.length() != 0 && Integer.valueOf(id).intValue() > 0)
+			fPriceList_ID.setValue(Integer.valueOf(id).intValue());
+		else
+			fPriceList_ID.setValue(findPLV(M_PriceList_ID));
+
+		if (M_Warehouse_ID > 0)
+		{
+			fWarehouse_ID.setValue(Integer.valueOf(M_Warehouse_ID).intValue());
+			return;
+		}
+
+		id = Env.getContext(Env.getCtx(), "#M_Warehouse_ID");
+		if (id != null && id.length() != 0 && Integer.valueOf(id).intValue() > 0)
+		{
+			fWarehouse_ID.setValue(Integer.valueOf(id).intValue());
+			return;
+		}
+
+		id = Env.getContext(Env.getCtx(), p_WindowNo, "M_Warehouse_ID");
+		if (id != null && id.length() != 0 && Integer.valueOf(id).intValue() > 0)
+			fWarehouse_ID.setValue(Integer.valueOf(id).intValue());
+	}
 
 	/**
 	 *	Find Price List Version and update context
@@ -1186,6 +1265,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 	public String getSQLWhere()
 	{
 		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<String> textFilters = new ArrayList<String>();
 		
 		//  => ID
 		if(isResetRecordID())
@@ -1233,43 +1313,43 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 
 		//  => Value
 		if(isValidSQLText(fieldValue))
-			list.add("UPPER(p.Value) LIKE ?");
+			textFilters.add("UPPER(p.Value) LIKE ?");
 
 		//  => Name
 		if(isValidSQLText(fieldName))
-			list.add("UPPER(p.Name) LIKE ?");
+			textFilters.add("UPPER(p.Name) LIKE ?");
 
 		//  => UPC
 		if(isValidSQLText(fieldUPC))
-			list.add("UPPER(p.UPC) LIKE ?");
+			textFilters.add("UPPER(p.UPC) LIKE ?");
 
 		//  => SKU
 		if(isValidSQLText(fieldSKU))
-			list.add("UPPER(p.SKU) LIKE ?");
+			textFilters.add("UPPER(p.SKU) LIKE ?");
+
+		String initialSearch = initialSearchText;
+		if (isValidSQLText(initialSearch))
+			textFilters.add("(UPPER(p.Value) LIKE ? OR UPPER(p.Name) LIKE ? OR UPPER(p.UPC) LIKE ? OR UPPER(p.SKU) LIKE ?)");
 
 		//	=> Vendor
 		if (fVendor_ID.getValue() != null)
 			list.add("ppo.C_BPartner_ID=?");
 		
 		StringBuffer sql = new StringBuffer();
-		int size = list.size();
-		//	Just one
-		if (size == 1)
-			sql.append(" AND ").append(list.get(0));
-		else if (size > 1)
+		for (String condition : list)
+			sql.append(" AND ").append(condition);
+		if (textFilters.size() == 1)
+			sql.append(" AND ").append(textFilters.get(0));
+		else if (textFilters.size() > 1)
 		{
-			boolean AND = checkAND.isSelected();
-			sql.append(" AND ");
-			if (!AND)
-				sql.append("(");
-			for (int i = 0; i < size; i++)
+			sql.append(" AND (");
+			for (int i = 0; i < textFilters.size(); i++)
 			{
 				if (i > 0)
-					sql.append(AND ? " AND " : " OR ");
-				sql.append(list.get(i));
+					sql.append(checkAND.isSelected() ? " AND " : " OR ");
+				sql.append(textFilters.get(i));
 			}
-			if (!AND)
-				sql.append(")");
+			sql.append(")");
 		}
 		
 		return sql.toString();
@@ -1342,6 +1422,13 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		{
 			// No parameter needs to be added
 		}
+		//  => Vendor (a base filter, therefore before text filters)
+		if (fVendor_ID.getValue() != null)
+		{
+			id = (Integer)fVendor_ID.getValue();
+			pstmt.setInt(index++, id.intValue());
+			log.fine("fVendor_ID=" + id);
+		}
 		
 		//  => Value
 		if (isValidSQLText(fieldValue))
@@ -1355,14 +1442,15 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		//  => SKU
 		if (isValidSQLText(fieldSKU))
 			pstmt.setString(index++, getSQLText(fieldSKU));
-		//  => Vendor
-		if (fVendor_ID.getValue() != null)
+		String initialSearch = initialSearchText;
+		if (isValidSQLText(initialSearch))
 		{
-			id = (Integer)fVendor_ID.getValue();
-			pstmt.setInt(index++, id.intValue());
-			log.fine("fVendor_ID=" + id);
+			String searchText = getSQLText(initialSearch);
+			pstmt.setString(index++, searchText);
+			pstmt.setString(index++, searchText);
+			pstmt.setString(index++, searchText);
+			pstmt.setString(index++, searchText);
 		}
-
 	}   //  setParameters
 
 	/**
@@ -1475,32 +1563,39 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		//}
 		list.add(new Info_Column(Msg.translate(Env.getCtx(), "Value"), "p.Value", String.class));
 		list.add(new Info_Column(Msg.translate(Env.getCtx(), "Name"), "p.Name", String.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "UPC"), "p.UPC", String.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "SKU"), "p.SKU", String.class));
+		
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "SKU"), "p.SKU", String.class));
 		list.add(new Info_Column(Msg.translate(Env.getCtx(), "C_UOM_ID"), "u.name", String.class));
-		if (isValidVObject(fPriceList_ID))
-		{
-			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceList"), "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",  BigDecimal.class));
-			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceStd"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd", BigDecimal.class));
-			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceLimit"), "bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit", BigDecimal.class));
-			list.add(new Info_Column(Msg.translate(Env.getCtx(), "Margin"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin", BigDecimal.class));
-		}
+		
 		if (isValidVObject(fWarehouse_ID))
 		{
-			list.add(new Info_Column(Msg.translate(Env.getCtx(), "IsStocked"), "p.isStocked", Boolean.class));
 			list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyAvailable"), "case when p.IsBOM='N' and (p.ProductType!='I' OR p.IsStocked='N') then to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.ad_client_id, 0), '99999999999') else bomQtyAvailable(p.M_Product_ID,?,0) end AS QtyAvailable", Double.class, true, true, null));
 			list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOnHand"), "case when p.IsBOM='N' and (p.ProductType!='I' OR p.IsStocked='N') then to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.ad_client_id, 0), '99999999999') else bomQtyOnHand(p.M_Product_ID,?,0) end AS QtyOnHand", Double.class));
 			list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyReserved"), "bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved", Double.class));
 			list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOrdered"), "bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered", Double.class));
+			//list.add(new Info_Column(Msg.translate(Env.getCtx(), "IsStocked"), "p.isStocked", Boolean.class));
+			
 			if (isUnconfirmed())
 			{
 				list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyUnconfirmed"), "(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) WHERE c.Processed='N' AND i.M_Warehouse_ID=? AND il.M_Product_ID=p.M_Product_ID) AS QtyUnconfirmed", Double.class));
 				list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyUnconfirmedMove"), "(SELECT SUM(c.TargetQty) FROM M_MovementLineConfirm c INNER JOIN M_MovementLine ml ON (c.M_MovementLine_ID=ml.M_MovementLine_ID) INNER JOIN M_Locator l ON (ml.M_LocatorTo_ID=l.M_Locator_ID) WHERE c.Processed='N' AND l.M_Warehouse_ID=? AND ml.M_Product_ID=p.M_Product_ID) AS QtyUnconfirmedMove", Double.class));
 			}
 		}
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "Vendor"), "bp.Name", String.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "IsInstanceAttribute"), "pa.IsInstanceAttribute", Boolean.class));
-		//
+		
+		if (isValidVObject(fPriceList_ID))
+		{
+			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceList"), "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",  BigDecimal.class));
+			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceStd"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd", BigDecimal.class));
+			list.add(new Info_Column(Msg.translate(Env.getCtx(), "PriceLimit"), "bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit", BigDecimal.class));
+			//list.add(new Info_Column(Msg.translate(Env.getCtx(), "Margin"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID)-bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin", BigDecimal.class));
+		}
+		
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "Vendor"), "bp.Name", String.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "IsInstanceAttribute"), "pa.IsInstanceAttribute", Boolean.class));
+		//AJAH JLeyton: se cambia columna al final
+		//tarea https://redbooth.com/a/#!/projects/2253329/tasks/62130890
+		list.add(new Info_Column(Msg.translate(Env.getCtx(), "UPC"), "p.UPC", String.class));
+		
 		s_Layout = new Info_Column[list.size()];
 		list.toArray(s_Layout);
 		//
@@ -1527,10 +1622,10 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		{
 			orderClause += ", QtyAvailable DESC";
 		}
-		if (isValidVObject(fPriceList_ID))
-		{
-			orderClause += ", Margin DESC";
-		}
+//		if (isValidVObject(fPriceList_ID))
+//		{
+//			orderClause += ", Margin DESC";
+//		}
 		if (orderClause.startsWith(", "))
 			orderClause = orderClause.substring(2);
 		
@@ -1562,6 +1657,8 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 			return;
 
 		Component component = e.getTarget();
+		if (component == fieldValue || component == fieldName || component == fieldUPC || component == fieldSKU)
+			initialSearchText = null;
 		
 		if(component != null)
 		{
@@ -1586,27 +1683,27 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				//  Display the window
 				InfoPAttributeInstancePanel pai = new InfoPAttributeInstancePanel (this, title, 
 						wh_id, 0, p_table.getLeadRowKey(), bp_id);
-				
-				if (!pai.wasCancelled())
-				{
-					//  Get the results and update the fASI criteria field
-					m_M_AttributeSetInstance_ID = pai.getM_AttributeSetInstance_ID();
-					m_M_Locator_ID = pai.getM_Locator_ID();
-					if (m_M_AttributeSetInstance_ID > 0)
-						fASI_ID.setValue(m_M_AttributeSetInstance_ID);
-					else
-						fASI_ID.setValue(0); //  No instance
-				}
-				
-				//  Saving here is confusing with multi-selection.  The Product Attribute button shouldn't be enabled
-				//  if multiple records are selected.  Also, don't close the info window if the
-				//  pai window was cancelled or nothing was selected.  Assume the user was just
-				//  looking around.
-				if (p_saveResults && m_M_AttributeSetInstance_ID != -1 && !pai.wasCancelled())  //  If the results are saved, we can save now - an ASI is product specific
-				{
-					dispose(p_saveResults);
-					return;
-				}
+				pai.setSelectionCallback(new InfoPAttributeInstancePanel.SelectionCallback() {
+					public void onClose(InfoPAttributeInstancePanel panel) {
+						if (panel.wasCancelled())
+							return;
+						
+						//  Get the results and update the fASI criteria field
+						m_M_AttributeSetInstance_ID = panel.getM_AttributeSetInstance_ID();
+						m_M_Locator_ID = panel.getM_Locator_ID();
+						if (m_M_AttributeSetInstance_ID > 0)
+							fASI_ID.setValue(m_M_AttributeSetInstance_ID);
+						else
+							fASI_ID.setValue(0); //  No instance
+						
+						//  Saving here is confusing with multi-selection.  The Product Attribute button shouldn't be enabled
+						//  if multiple records are selected.  Also, don't close the info window if the
+						//  pai window was cancelled or nothing was selected.  Assume the user was just
+						//  looking around.
+						if (p_saveResults && m_M_AttributeSetInstance_ID != -1)  //  If the results are saved, we can save now - an ASI is product specific
+							dispose(p_saveResults);
+					}
+				});
 				return;
 			}		
 			else if (component instanceof Combobox)
@@ -1641,7 +1738,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 			else if (component instanceof Tab) // a tab in the ATP panel is selected
 			{
 
-				if( detailTabBox.getSelectedIndex() == 5)
+				if( detailTabBox.getSelectedIndex() == 1)
 				{	
 					checkShowDetail.setEnabled(true);
 				}
@@ -1745,21 +1842,62 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 		list.add(new Info_Column(" ", "M_Product_ID", IDColumn.class));
 		list.add(new Info_Column(Msg.translate(Env.getCtx(), "M_Warehouse_ID"), "Warehouse", String.class));
 		list.add(new Info_Column(Msg.translate(Env.getCtx(), "M_Locator_ID"), "Locator", String.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "DocumentNo"), "DocumentNo", String.class));
-		list.add(new Info_Column(Msg.getMsg(Env.getCtx(), "Date", true), "Date", Timestamp.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOnHand"), "QtyOnHand", Double.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyReserved"), "QtyReserved", Double.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyAvailable"), "QtyAvailable", Double.class, true, true, null));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOrdered"), "QtyOrdered", Double.class));
-		list.add(new Info_Column(Msg.getMsg(Env.getCtx(), "ATP", true), "DeltaQty", Double.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "C_BPartner_ID"), "BP_Name", String.class));
-		list.add(new Info_Column(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"), "PASI", String.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "DocumentNo"), "DocumentNo", String.class));
+		//list.add(new Info_Column(Msg.getMsg(Env.getCtx(), "Date", true), "Date", Timestamp.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOnHand"), "QtyOnHand", Double.class));
+		list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOnHand"), "REPLACE(to_char(QtyOnHand, 'FM999G999G999G990'), '.', ',')", String.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyReserved"), "QtyReserved", Double.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyAvailable"), "QtyAvailable", Double.class, true, true, null));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "QtyOrdered"), "QtyOrdered", Double.class));
+		//list.add(new Info_Column(Msg.getMsg(Env.getCtx(), "ATP", true), "DeltaQty", Double.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "C_BPartner_ID"), "BP_Name", String.class));
+		//list.add(new Info_Column(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"), "PASI", String.class));
 
 
 		m_layoutATP = new Info_Column[list.size()];
 		list.toArray(m_layoutATP);
 
 	}	//	initAtpTab	
+	
+	
+	private void applyAtpTableStyle() {
+
+	    Listhead head = m_tableAtp.getListhead();
+	    if (head != null) {
+	        for (Object o : head.getChildren()) {
+	            if (o instanceof Listheader) {
+	                ((Listheader) o).setStyle(
+	                    "padding-left:6px;"
+	                );
+	            }
+	        }
+	    }
+
+	    for (Object it : m_tableAtp.getItems()) {
+	        if (!(it instanceof Listitem)) continue;
+	        Listitem item = (Listitem) it;
+
+	        for (Object c : item.getChildren()) {
+	            if (!(c instanceof Listcell)) continue;
+	            Listcell cell = (Listcell) c;
+
+	            cell.setStyle(
+	                "text-align:left !important;" +
+	                "border-right:1px solid #e0e0e0;" +
+	                "border-bottom:1px solid #cfd8dc;" +
+	                "padding-left:6px;"
+	            );
+
+	            if (cell.getFirstChild() instanceof org.zkoss.zk.ui.HtmlBasedComponent) {
+	                ((org.zkoss.zk.ui.HtmlBasedComponent) cell.getFirstChild())
+	                    .setStyle("display:block; width:100%; text-align:left !important;");
+	            }
+	        }
+	    }
+
+	    m_tableAtp.setStyle("border:1px solid #cfd8dc !important;");
+	}
+
 	
 	/**
 	 *	Refresh ATP
@@ -1809,6 +1947,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				+ " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID)"
 				+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
 				+ " AND s.M_Product_ID=" + m_M_Product_ID;
+			sql += " AND s.QtyOnHand <> 0"; // distinto a 0
 			if (M_Warehouse_ID != 0)
 				sql += " AND l.M_Warehouse_ID=" + M_Warehouse_ID;
 			//if (m_M_AttributeSetInstance_ID > 0)
@@ -1950,23 +2089,32 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 					line.add(mpid);							//  M_Product_ID
 					line.add(rs.getString(2));						//  warehouse
 					line.add(rs.getString(3));      					//  Locator
-					line.add(rs.getString(13));						//  DocumentNo
-					line.add(rs.getTimestamp(5));					//  Date
-					double qtyOnHand = rs.getDouble(6);
-					double qtyDelivered  = rs.getDouble(7);
-					double qtyOrdered = rs.getDouble(8);
-					double qtyReserved = rs.getDouble(9);
-					qtyAvailable += qtyOnHand - qtyReserved;
-					qtyExpected += qtyOnHand;
-					qtyExpected += qtyOrdered;
-					qtyExpected -= qtyReserved;
-					line.add(qtyOnHand);										//  Qty on hand (this line)
-					line.add(qtyReserved);  									//  QtyReserved
-					line.add(qtyAvailable);  									//  Qty Available (running sum)
-					line.add(qtyOrdered);  									//  Qty To Delivery
-					line.add(qtyExpected);										//  Delta Qty
-					line.add(rs.getString(12));						//  BPartner
-					line.add(rs.getString(10));						//  ASI
+					//line.add(rs.getString(13));						//  DocumentNo
+					//line.add(rs.getTimestamp(5));					//  Date
+					//double qtyOnHand = rs.getDouble(6);
+					long qtyOnHand = rs.getLong(6);     // sin decimales
+					//double qtyDelivered  = rs.getDouble(7);
+					///double qtyOrdered = rs.getDouble(8);
+					//double qtyReserved = rs.getDouble(9);
+					//qtyAvailable += qtyOnHand - qtyReserved;
+					//qtyExpected += qtyOnHand;
+					//qtyExpected += qtyOrdered;
+					//qtyExpected -= qtyReserved;
+					 //no mostrar registros con existencia 0
+				    /*if (qtyOnHand == 0)
+				        continue;
+					line.add(qtyOnHand);*/										//  Qty on hand (this line)
+					if (qtyOnHand == 0)
+					    continue;
+
+					line.add(String.valueOf(qtyOnHand)); 
+
+					//line.add(qtyReserved);  									//  QtyReserved
+					//line.add(qtyAvailable);  									//  Qty Available (running sum)
+					//line.add(qtyOrdered);  									//  Qty To Delivery
+					//line.add(qtyExpected);										//  Delta Qty
+					//line.add(rs.getString(12));						//  BPartner
+					//line.add(rs.getString(10));						//  ASI
 					data.add(line);
 				}
 			}
@@ -2003,11 +2151,14 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 				}
 			}
 			m_tableAtp.autoSize();
+			applyAtpTableStyle();  
 			m_tableAtp.repaint();
 		//}});
 
 
 	}	//	refreshAtpTab
+	
+	
 	// Elaine 2008/11/21
     public int getM_Product_Category_ID()
     {
@@ -2078,6 +2229,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener, ValueC
 	 */
 	private void clearParameters()
 	{
+		initialSearchText = null;
 		//  Clear fields and set defaults
 		fieldValue.setText("");
 		fieldName.setText("");

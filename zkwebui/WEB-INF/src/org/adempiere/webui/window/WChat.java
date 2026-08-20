@@ -114,22 +114,29 @@ public class WChat extends Window implements EventListener
 	private void staticInit () throws Exception
 	{
 		this.appendChild(mainPanel);
-		mainPanel.setStyle("position:absolute; height:90%; width:95%; border: none; background-color: white;");
+		mainPanel.setHflex("1");
+		mainPanel.setVflex("1");
+		mainPanel.setStyle("border: none; background-color: white;");
 		//
 		North north = new North();
 		north.setSplittable(true);
 		north.setStyle("border: none");
 		mainPanel.appendChild(north);
 		historyDiv = new Div();
-		historyDiv.setStyle("position:absolute; height:100%; width:100%; background-color: lightgray;");
+		historyDiv.setHflex("1");
+		historyDiv.setVflex("1");
+		historyDiv.setStyle("background-color: lightgray;");
 		historyDiv.appendChild(historyText);
 		north.appendChild(historyDiv);
 		north.setAutoscroll(true);
 		north.setHeight("150px");
 
 		Center center = new Center();
+		center.setHflex("1");
+		center.setVflex("1");
 		center.appendChild(newText);
-		newText.setStyle("position:absolute; height:100%; width:100%");
+		newText.setHflex("1");
+		newText.setVflex("1");
 		newText.setMultiline(true);
 		mainPanel.appendChild(center);
 		//

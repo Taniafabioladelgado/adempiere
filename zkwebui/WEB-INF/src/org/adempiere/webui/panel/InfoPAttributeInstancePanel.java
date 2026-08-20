@@ -32,13 +32,16 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
 import org.zkoss.zul.Div;
+import org.zkoss.zul.Listitem;
 
 /**
  * Display Product Attribute Instance Info
@@ -52,6 +55,11 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 	 * 
 	 */
 	private static final long serialVersionUID = -2883260173499157121L;
+
+	public interface SelectionCallback
+	{
+		void onClose(InfoPAttributeInstancePanel panel);
+	}
 
 	/**
 	 * 	Constructor
@@ -113,6 +121,7 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 	private String				m_sql;
 	private boolean 			m_wasCancelled;
 	private Window				m_window;
+	private SelectionCallback	m_selectionCallback;
 
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(PAttributeInstance.class);
@@ -127,6 +136,8 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
         showAll.addActionListener(this);
         showAll.setAttribute("zk_component_ID", "Lookup_Criteria_showAll");        
         m_table.setAttribute("zk_component_ID", "Lookup_Data_ASIResults");        
+        m_table.addEventListener(Events.ON_CLICK, this);
+        m_table.addEventListener(Events.ON_SELECT, this);
 
         
 		Borderlayout borderlayout = new Borderlayout();
@@ -137,14 +148,12 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 		//setAttribute(Window.MODE_KEY, Window.MODE_MODAL);
 		setBorder("normal");
 		setClosable(true);
-		this.setContentStyle("overflow: auto");
+		this.setContentStyle("overflow: hidden");
         this.setSizable(true);      
         this.setMaximizable(true);
 		//
-        //  As a modal window, the panel can't extend past the parent
- 		this.setWidth("100%");
-		this.setHeight("100%");
-		this.setMaximized(true);
+ 		this.setWidth("900px");
+		this.setHeight("520px");
 		//
         borderlayout.setWidth("100%");
         borderlayout.setHeight("100%");
@@ -162,6 +171,8 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
         center.setAutoscroll(true);
         //center.setFlex(true);
 		borderlayout.appendChild(center);
+		m_table.setWidth("100%");
+		m_table.setHeight("100%");
 		center.appendChild(m_table);
 		
 		South south = new South();
@@ -300,6 +311,7 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 
 			rs = pstmt.executeQuery();
 			m_table.loadTable(rs);
+			selectFirstRowIfAvailable();
 		}
 		catch (Exception e)
 		{
@@ -320,20 +332,74 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 	{
 		if (e.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
-			dispose();
 			m_wasCancelled = false;
+			dispose();
+			fireSelectionCallback();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
-			dispose();
 			m_M_AttributeSetInstance_ID = -1;
 			m_M_AttributeSetInstanceName = null;
 			m_wasCancelled = true;
+			dispose();
+			fireSelectionCallback();
 		}
 		else if (e.getTarget() == showAll)
 		{
 			refresh();			
 		}
+		else if (selectClickedRow(e))
+		{
+			enableButtons();
+		}
+	}
+
+	private boolean selectClickedRow(Event event)
+	{
+		if (!Events.ON_CLICK.equals(event.getName()) && !Events.ON_SELECT.equals(event.getName()))
+			return false;
+
+		if (event.getTarget() == m_table)
+			return true;
+
+		Listitem item = findListitem(event.getTarget());
+		if (item == null || item.getParent() != m_table)
+			return false;
+
+		m_table.setSelectedItem(item);
+		if (item.getIndex() >= 0 && m_table.getKeyColumnIndex() >= 0)
+			m_table.setRowChecked(item.getIndex(), true);
+		return true;
+	}
+
+	private Listitem findListitem(Component component)
+	{
+		while (component != null && !(component instanceof Listitem))
+			component = component.getParent();
+		return (Listitem)component;
+	}
+
+	private void selectFirstRowIfAvailable()
+	{
+		if (m_table.getRowCount() <= 0 || m_table.getSelectedRow() >= 0)
+			return;
+
+		m_table.setSelectedIndex(0);
+		if (m_table.getKeyColumnIndex() >= 0)
+			m_table.setRowChecked(0, true);
+	}
+
+	public void setSelectionCallback(SelectionCallback selectionCallback)
+	{
+		m_selectionCallback = selectionCallback;
+	}
+
+	private void fireSelectionCallback()
+	{
+		SelectionCallback callback = m_selectionCallback;
+		m_selectionCallback = null;
+		if (callback != null)
+			callback.onClose(this);
 	}
 
 
@@ -355,14 +421,14 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 		m_M_AttributeSetInstance_ID = -1;
 		m_M_AttributeSetInstanceName = null;
 		m_M_Locator_ID = 0;
-		int row = m_table.getSelectedRow();
+		int row = getSelectedTableRow();
 		boolean enabled = row != -1;
 		if (enabled)
 		{
-			Integer ID = m_table.getSelectedRowKey();
-			if (ID != null)
+			int ID = m_table.getRowKey(row);
+			if (ID > 0)
 			{
-				m_M_AttributeSetInstance_ID = ID.intValue();
+				m_M_AttributeSetInstance_ID = ID;
 				m_M_AttributeSetInstanceName = (String)m_table.getValueAt(row, 1);
 				//
 				Object oo = m_table.getValueAt(row, 5);
@@ -378,6 +444,20 @@ public class InfoPAttributeInstancePanel extends Window implements EventListener
 			+ " - " + m_M_AttributeSetInstanceName
 			+ "; M_Locator_ID=" + m_M_Locator_ID);
 	}	//	enableButtons
+
+	private int getSelectedTableRow()
+	{
+		int row = m_table.getSelectedRow();
+		if (row >= 0)
+			return row;
+
+		for (int i = 0; i < m_table.getRowCount(); i++)
+		{
+			if (m_table.isRowChecked(i))
+				return i;
+		}
+		return -1;
+	}
 
 	/**
 	 * 	Get Attribute Set Instance

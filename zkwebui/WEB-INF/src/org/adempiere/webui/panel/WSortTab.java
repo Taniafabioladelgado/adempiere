@@ -86,10 +86,13 @@ public class WSortTab extends Panel implements IADTabPanel {
 	 *  @param GridTab
 	 */
 	public WSortTab(int WindowNo, GridTab gridTab) {
-		log.config("SortOrder=" + gridTab.getAD_ColumnSortOrder_ID() + ", SortYesNo=" + gridTab.getAD_ColumnSortYesNo_ID());
+		log.config("SortOrder=" + gridTab.getAD_ColumnSortOrder_ID() 
+			+ ", SortYesNo=" + gridTab.getAD_ColumnSortYesNo_ID());
 		windowNo = WindowNo;
 		this.gridTab = gridTab;
-		this.setHeight("100%");
+
+		this.setWidth("100%");
+		this.setVflex("1");
 	}	//	VSortTab
 
 	/**	Logger			*/
@@ -144,21 +147,19 @@ public class WSortTab extends Panel implements IADTabPanel {
 	 */
 	private void init() throws Exception
 	{
-		this.setStyle("height: 100%; width: 100%;");
-		//
+		this.setStyle("width: 100%; display: flex; align-items: flex-start;");
+		this.setVflex("1");
+
 		noLabel.setValue(Msg.getMsg(Env.getCtx(), "Available"));
 		yesLabel.setValue(Msg.getMsg(Env.getCtx(), "Sequence"));
 		noLabel.setStyle("text-align:center; display: block;");
 		yesLabel.setStyle("text-align:center; display: block;");
-		//	For List
-		yesList.setHeight("100%");
-		noList.setHeight("100%");
-		yesList.setVflex(true);
-		noList.setVflex(true);
+
+		yesList.setVflex("min");
+		noList.setVflex("min");
 
 		EventListener mouseListener = new EventListener()
 		{
-
 			public void onEvent(Event event) throws Exception
 			{
 				if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
@@ -169,13 +170,14 @@ public class WSortTab extends Panel implements IADTabPanel {
 		};
 		yesList.addDoubleClickListener(mouseListener);
 		noList.addDoubleClickListener(mouseListener);
-		//
+
 		EventListener actionListener = new EventListener()
 		{
 			public void onEvent(Event event) throws Exception {
 				migrateValueAcrossLists(event);
 			}
 		};
+
 		yesList.setSeltype("multiple");
 		noList.setSeltype("multiple");
 
@@ -212,21 +214,26 @@ public class WSortTab extends Panel implements IADTabPanel {
 					DropEvent me = (DropEvent) event;
 					ListItem startItem = (ListItem) me.getDragged();
 					ListItem endItem = (ListItem) me.getTarget();
-					if (startItem.getListbox() == endItem.getListbox() && startItem.getListbox() == yesList)
+
+					if (startItem.getListbox() == endItem.getListbox() 
+							&& startItem.getListbox() == yesList)
 					{
 						int startIndex = yesList.getIndexOfItem(startItem);
 						int endIndex = yesList.getIndexOfItem(endItem);
 						Object endElement = yesModel.getElementAt(endIndex);
 						Object element = yesModel.getElementAt(startIndex);
+
 						yesModel.removeElement(element);
 						endIndex = yesModel.indexOf(endElement);
 						yesModel.add(endIndex, element);
 						yesList.setSelectedIndex(endIndex);
-						if ( yesList.getSelectedItem() != null)
+
+						if (yesList.getSelectedItem() != null)
 						{
 							AuFocus focus = new AuFocus(yesList.getSelectedItem());
 							Clients.response(focus);
 						}
+
 						setIsChanged(true);
 					}
 				}
@@ -236,38 +243,44 @@ public class WSortTab extends Panel implements IADTabPanel {
 
 		ListHead listHead = new ListHead();
 		listHead.setParent(yesList);
+
 		ListHeader listHeader = new ListHeader();
 		listHeader.appendChild(yesLabel);
 		listHeader.setParent(listHead);
 
 		listHead = new ListHead();
 		listHead.setParent(noList);
+
 		listHeader = new ListHeader();
 		listHeader.appendChild(noLabel);
 		listHeader.setParent(listHead);
 
 		Span span = new Span();
 		span.setParent(this);
-		span.setStyle("height: 99%; display: inline-block; width: 40%;");
+		span.setStyle("display: inline-block; width: 40%; vertical-align: top;");
 		span.appendChild(noList);
+
 		Vbox vbox = new Vbox();
 		vbox.appendChild(bAdd);
 		vbox.appendChild(bRemove);
+
 		span = new Span();
 		span.setParent(this);
-		span.setStyle("height: 99%; display: inline-block; width: 46px");
+		span.setStyle("display: inline-block; width: 46px; vertical-align: top;");
 		span.appendChild(vbox);
 
 		span = new Span();
 		span.setParent(this);
-		span.setStyle("height: 99%; display: inline-block; width: 40%");
+		span.setStyle("display: inline-block; width: 40%; vertical-align: top;");
 		span.appendChild(yesList);
+
 		vbox = new Vbox();
 		vbox.appendChild(bUp);
 		vbox.appendChild(bDown);
+
 		span = new Span();
 		span.setParent(this);
-		span.setStyle("height: 99%; display: inline-block; width: 46px");
+		span.setStyle("display: inline-block; width: 46px; vertical-align: top;");
 		span.appendChild(vbox);
 	}	//	Init
 
@@ -600,21 +613,32 @@ public class WSortTab extends Panel implements IADTabPanel {
 	}
 
 	public void setUnselected(IADTabPanel panel)
-    {
-    	((HtmlBasedComponent)this).setStyle("border:none;");
-		
+	{
+		((HtmlBasedComponent)this).setStyle(
+			"border:none; width: 100%; display: flex; align-items: flex-start;"
+		);
+
 		this.setWidth("100%");
-		this.setHeight("100%");
-		
-    }
+		this.setVflex("1");
+	}
     
-    public void setSelected(IADTabPanel panel)
-    {
-    	getGlobalToolbar().setCurrentPanel(panel);
-    	((HtmlBasedComponent)this).setStyle("border-left: 7px solid #fa962f; border-top: 1px solid #fa962f; border-bottom: 1px solid #fa962f; border-right: 1px solid #fa962f;");		
+	public void setSelected(IADTabPanel panel)
+	{
+		getGlobalToolbar().setCurrentPanel(panel);
+
+		((HtmlBasedComponent)this).setStyle(
+			"border-left: 7px solid #fa962f;" +
+			"border-top: 1px solid #fa962f;" +
+			"border-bottom: 1px solid #fa962f;" +
+			"border-right: 1px solid #fa962f;" +
+			"width: 99%;" +
+			"display: flex;" +
+			"align-items: flex-start;"
+		);
+
 		this.setWidth("99%");
-		this.setHeight("98%");
-    }
+		this.setVflex("1");
+	}
 
 	@Override
 	public Grid getGrid() {

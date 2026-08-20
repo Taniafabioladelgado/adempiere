@@ -58,9 +58,11 @@ public class WFEditor extends ADForm {
 
 	@Override
 	protected void initForm() {
-		this.setHeight("100%");
+		this.setVflex("1");
 		Borderlayout layout = new Borderlayout();
-		layout.setStyle("width: 100%; height: 100%; position: absolute;");
+		layout.setHflex("1");
+		layout.setVflex("1");
+		layout.setStyle("margin:0; padding:0;");
 		appendChild(layout);
 		
 		String sql = MRole.getDefault().addAccessSQL(

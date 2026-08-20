@@ -43,6 +43,8 @@ public class HeaderPanel extends Panel implements EventListener
 {
 	private static final long serialVersionUID = -2351317624519209484L;
 
+	private static final String HEADER_HEIGHT = "50px";
+
 	private Image image = new Image();
 
     public HeaderPanel()
@@ -54,42 +56,53 @@ public class HeaderPanel extends Panel implements EventListener
     private void init()
     {
     	LayoutUtils.addSclass("desktop-header", this);
+    	setHeight(HEADER_HEIGHT);
+    	setStyle("height:" + HEADER_HEIGHT + "; min-height:" + HEADER_HEIGHT + "; overflow:visible; padding:0; margin:0;");
 
     	UserPanel userPanel = new UserPanel();
 
     	image.setSrc(ThemeManager.getSmallLogo());
     	image.addEventListener(Events.ON_CLICK, this);
-    	image.setStyle("cursor: pointer;");
+    	image.setStyle("cursor:pointer; max-height:52px; max-width:190px; width:auto; object-fit:contain;");
 
     	Borderlayout layout = new Borderlayout();
     	LayoutUtils.addSclass("desktop-header", layout);
     	layout.setParent(this);
+    	layout.setWidth("100%");
+    	layout.setHeight(HEADER_HEIGHT);
+    	layout.setStyle("height:" + HEADER_HEIGHT + "; min-height:" + HEADER_HEIGHT + "; overflow:visible; border:none; padding:0; margin:0;");
+
     	West west = new West();
     	west.setParent(layout);
+    	west.setWidth("230px");
+    	west.setBorder("none");
+    	west.setSplittable(false);
+    	west.setCollapsible(false);
+    	west.setStyle("background-color:transparent; border:none; padding:0; margin:0; overflow:hidden;");
 
     	Vbox vb = new Vbox();
-        vb.setParent(west);
-        vb.setHeight("100%");
-        vb.setPack("center");
-        vb.setAlign("left");
+    	vb.setParent(west);
+    	vb.setWidth("100%");
+    	vb.setHeight(HEADER_HEIGHT);
+    	vb.setPack("center");
+    	vb.setAlign("center");
+    	vb.setStyle("height:" + HEADER_HEIGHT + "; padding:0 10px; box-sizing:border-box; overflow:hidden;");
 
     	image.setParent(vb);
 
     	LayoutUtils.addSclass("desktop-header-left", west);
-    	//the following doesn't work when declare as part of the header-left style
-    	west.setStyle("background-color: transparent; border: none;");
 
-    	// Elaine 2009/03/02
     	Center center = new Center();
     	center.setParent(layout);
+    	center.setBorder("none");
+    	center.setStyle("background-color:transparent; border:none; padding:0; margin:0; overflow:visible;");
+
     	userPanel.setParent(center);
     	userPanel.setWidth("100%");
-    	userPanel.setHeight("100%");
-    	userPanel.setStyle("position: absolute");
-    	//center.setFlex(true);
+    	userPanel.setHeight(HEADER_HEIGHT);
+    	userPanel.setStyle("height:" + HEADER_HEIGHT + "; min-height:" + HEADER_HEIGHT + "; position:relative; overflow:visible;");
+
     	LayoutUtils.addSclass("desktop-header-right", center);
-    	//the following doesn't work when declare as part of the header-right style
-    	center.setStyle("background-color: transparent; border: none;");
     }
 
 	public void onEvent(Event event) throws Exception {

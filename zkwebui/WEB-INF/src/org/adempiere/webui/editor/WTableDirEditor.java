@@ -66,6 +66,7 @@ ContextMenuListener, IZoomableEditor
     private Object oldValue;
     private Object m_oldValue;
     private WEditorPopupMenu popupMenu;
+    private boolean readWrite;
        
     public WTableDirEditor(GridField gridField)
     {
@@ -151,7 +152,7 @@ ContextMenuListener, IZoomableEditor
     		{
     			WRecordInfo.addMenu(popupMenu);
     		}
-        	getComponent().setContext(popupMenu.getId());
+        	getComponent().setContext(popupMenu);
         }
     }
 
@@ -229,15 +230,26 @@ ContextMenuListener, IZoomableEditor
 		return (Combobox) component;
 	}
 
-	@Override
-	public boolean isReadWrite() {
-		return getComponent().isEnabled();
-	}
+    @Override
+    public boolean isReadWrite() {
+        return readWrite;
+    }
 
-	@Override
-	public void setReadWrite(boolean readWrite) {
-		getComponent().setEnabled(readWrite);
-	}
+    @Override
+    public void setReadWrite(boolean readWrite) {
+        this.readWrite = readWrite;
+
+        getComponent().setDisabled(false);
+        getComponent().setReadonly(!readWrite);
+        // Keep the trigger visible so a read-only lookup still looks like a
+        // list field. Eureka disables pointer interaction with this button;
+        // the value itself remains protected by the read-only state.
+        getComponent().setButtonVisible(true);
+        getComponent().setAutodrop(readWrite);
+
+        if (!readWrite)
+            getComponent().setOpen(false);
+    }
 
 	private void refreshList()
     {
@@ -312,6 +324,15 @@ ContextMenuListener, IZoomableEditor
     {
     	if (Events.ON_SELECT.equalsIgnoreCase(event.getName()))
     	{
+			// A visible trigger is only a type indicator for read-only fields.
+			// Reject keyboard or client-side selection attempts as a safeguard.
+			if (!isReadWrite())
+			{
+				setValue(oldValue);
+				getComponent().setOpen(false);
+				return;
+			}
+
 	        Object newValue = getValue();
 	        if (isValueChange(newValue)) {
 		        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, newValue);
@@ -388,7 +409,21 @@ ContextMenuListener, IZoomableEditor
 	 */
     public void actionZoom()
 	{
-    	AEnv.actionZoom(lookup, getValue());
+    	try {
+            logger.warning("ZOOM INICIO column=" + getColumnName()
+                + ", value=" + getValue()
+                + ", lookup=" + lookup);
+
+            AEnv.actionZoom(lookup, getValue());
+
+            logger.warning("ZOOM FIN OK column=" + getColumnName());
+        }
+        catch (Throwable t) {
+            logger.log(java.util.logging.Level.SEVERE,
+                "ERROR EN ZOOM column=" + getColumnName()
+                + ", value=" + getValue()
+                + ", lookup=" + lookup, t);
+        }
 	}	
     
 	public void onMenu(ContextMenuEvent evt) 

@@ -79,11 +79,11 @@ public class UserPanel extends Vbox  implements EventListener
     	this.setWidth("100%");
     	this.setAlign("right");
     	this.setPack("center");
-    	this.setStyle("text-align:right; height:42px; min-height:42px; overflow:visible;");
+    	this.setStyle("text-align:right; height:100%; min-height:0; padding:7px 10px 6px 0; overflow:visible; box-sizing:border-box;");
     	//
 
     	lblUserNameValue.setValue(getUserName() + "@" + getClientName() + "." + getOrgName());
-    	lblUserNameValue.setStyle("text-align:right; color:#ffffff; font-size:11px; line-height:14px; height:14px; white-space:nowrap;");
+    	lblUserNameValue.setStyle("text-align:right; color:#ffffff; font-size:11px; line-height:15px; min-height:15px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;");
     	LayoutUtils.addSclass("desktop-header-font", lblUserNameValue);
     	this.appendChild(lblUserNameValue);
 
@@ -91,12 +91,12 @@ public class UserPanel extends Vbox  implements EventListener
     	hbox.setWidth("100%");
     	hbox.setPack("end");
     	hbox.setAlign("center");
-    	hbox.setStyle("height:22px; min-height:22px; overflow:visible; justify-content:flex-end;");
+    	hbox.setStyle("height:auto; min-height:24px; max-height:48px; overflow:visible; justify-content:flex-end; display:flex; flex-wrap:wrap; row-gap:1px; column-gap:2px;");
     	
     	// TODO - make configurable
     	context.setLabel(Msg.getMsg(Env.getCtx(), "Context"));
     	context.addEventListener(Events.ON_CLICK, this);
-    	context.setStyle("text-align:right");
+    	context.setStyle("text-align:right; height:22px; line-height:22px; padding:0 6px;");
     	LayoutUtils.addSclass("desktop-header-font", context);
     	context.setParent(hbox);    	
 
@@ -106,7 +106,7 @@ public class UserPanel extends Vbox  implements EventListener
 
     	preference.setLabel(Msg.getMsg(Env.getCtx(), "Preference"));
     	preference.addEventListener(Events.ON_CLICK, this);
-    	preference.setStyle("text-align:right");
+    	preference.setStyle("text-align:right; height:22px; line-height:22px; padding:0 6px;");
     	LayoutUtils.addSclass("desktop-header-font", preference);
     	preference.setParent(hbox);
 
@@ -116,7 +116,7 @@ public class UserPanel extends Vbox  implements EventListener
 
     	role.setLabel(this.getRoleName());
     	role.addEventListener(Events.ON_CLICK, this);
-    	role.setStyle("text-align:right");
+    	role.setStyle("text-align:right; height:22px; line-height:22px; padding:0 6px; max-width:240px; overflow:hidden; text-overflow:ellipsis;");
     	LayoutUtils.addSclass("desktop-header-font", role);
     	role.setParent(hbox);
 
@@ -126,7 +126,7 @@ public class UserPanel extends Vbox  implements EventListener
 
     	changeRole.setLabel(Msg.getMsg(Env.getCtx(),"changeRole"));
     	changeRole.addEventListener(Events.ON_CLICK, this);
-    	changeRole.setStyle("text-align:right");
+    	changeRole.setStyle("text-align:right; height:22px; line-height:22px; padding:0 6px;");
     	LayoutUtils.addSclass("desktop-header-font", changeRole);
     	changeRole.setParent(hbox);
     	
@@ -136,7 +136,7 @@ public class UserPanel extends Vbox  implements EventListener
 
     	logout.setLabel(Msg.getMsg(Env.getCtx(),"Logout"));
     	logout.addEventListener(Events.ON_CLICK, this);
-    	logout.setStyle("text-align:right");
+    	logout.setStyle("text-align:right; height:22px; line-height:22px; padding:0 6px;");
     	LayoutUtils.addSclass("desktop-header-font", logout);
     	logout.setParent(hbox);
 

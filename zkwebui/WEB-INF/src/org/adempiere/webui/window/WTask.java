@@ -162,13 +162,15 @@ public class WTask extends Window implements EventListener
 	private void zkInit() throws Exception
 	{
 		Borderlayout layout = new Borderlayout();
-		layout.setWidth("100%");
-		layout.setHeight("100%");
-		layout.setStyle("position: absolute;");
-		this.setHeight("100%");
-		this.setWidth("100%");
+		layout.setHflex("1");
+		layout.setVflex("1");
+		layout.setStyle("margin:0; padding:0;");
+		this.setHflex("1");
+		this.setVflex("1");
 		appendChild(layout);
 		Center center = new Center();
+		center.setHflex("1");
+		center.setVflex("1");
 		layout.appendChild(center);
 		Div div = new Div();
 		div.setStyle("width: 100%; height:100%; overflow: auto");

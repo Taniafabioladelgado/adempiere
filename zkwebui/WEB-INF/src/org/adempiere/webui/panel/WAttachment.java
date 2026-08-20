@@ -40,6 +40,7 @@ import org.zkoss.zk.au.out.AuEcho;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
@@ -204,7 +205,8 @@ public class WAttachment extends Window implements EventListener
 
 		bLoad.setImage("/images/Import16.png");
 		bLoad.setTooltiptext(Msg.getMsg(Env.getCtx(), "Load"));
-		bLoad.addEventListener(Events.ON_CLICK, this);
+		bLoad.setUpload("true");
+		bLoad.addEventListener(Events.ON_UPLOAD, this);
 
 		bDelete.setImage("/images/Delete16.png");
 		bDelete.setTooltiptext(Msg.getMsg(Env.getCtx(), "Delete"));
@@ -402,10 +404,8 @@ public class WAttachment extends Window implements EventListener
 		
 		else if (e.getTarget() == bDeleteAll)
 		{
-			deleteAttachment();
-			dispose();
+		    deleteAttachment();
 		}
-		
 		//	Delete individual entry and Return
 		
 		else if (e.getTarget() == bDelete)
@@ -418,8 +418,11 @@ public class WAttachment extends Window implements EventListener
 		
 		//	Load Attachment
 		
-		else if (e.getTarget() == bLoad)
-			loadFile();
+		else if (e.getTarget() == bLoad && e instanceof UploadEvent)
+		{
+		    UploadEvent uploadEvent = (UploadEvent) e;
+		    loadFile(uploadEvent.getMedia());
+		}
 		
 		//	Open Attachment
 		
@@ -437,46 +440,43 @@ public class WAttachment extends Window implements EventListener
 	 *	Load file for attachment
 	 */
 	
-	private void loadFile()
+	private void loadFile(Media media)
 	{
 	    log.info("");
 
-	    preview.setVisible(false);
-
-	    Media media = null;
-
-	    media = Fileupload.get(true);
-
 	    if (media == null)
-	    {
-	        preview.setVisible(true);
-	        preview.invalidate();
 	        return;
-	    }
+
+	    preview.setVisible(false);
 
 	    String fileName = media.getName();
 	    log.config(fileName);
-	    int cnt = m_attachment.getEntryCount();
 
-	    // update
-	    for (int i = 0; i < cnt; i++)
+	    byte[] mediaData = getMediaData(media);
+	    int entryCount = m_attachment.getEntryCount();
+
+	    // Actualizar un archivo existente con el mismo nombre
+	    for (int i = 0; i < entryCount; i++)
 	    {
 	        if (m_attachment.getEntryName(i).equals(fileName))
 	        {
-	            m_attachment.updateEntry(i, getMediaData(media));
+	            m_attachment.updateEntry(i, mediaData);
 	            cbContent.setSelectedIndex(i);
-	            displayData(cbContent.getSelectedIndex(), false);
+	            displayData(i, false);
 	            m_change = true;
 	            return;
 	        }
 	    }
 
-	    // new
-	    if (m_attachment.addEntry(fileName, getMediaData(media)))
+	    // Agregar un archivo nuevo
+	    if (m_attachment.addEntry(fileName, mediaData))
 	    {
-	        cbContent.appendItem(media.getName(), media.getName());
-	        cbContent.setSelectedIndex(cbContent.getItemCount() - 1);
-	        displayData(cbContent.getSelectedIndex(), false);
+	        cbContent.appendItem(fileName, fileName);
+
+	        int newIndex = cbContent.getItemCount() - 1;
+	        cbContent.setSelectedIndex(newIndex);
+	        displayData(newIndex, false);
+
 	        m_change = true;
 	    }
 	}	//	getFileName
@@ -509,11 +509,26 @@ public class WAttachment extends Window implements EventListener
 	 */
 	private void deleteAttachment()
 	{
-		log.info("");
-		
-		if (FDialog.ask(m_WindowNo, this, "AttachmentDelete?"))
-			m_attachment.delete(true);
-	}	//	deleteAttachment
+	    log.info("");
+
+	    FDialog.ask(
+	        m_WindowNo,
+	        this,
+	        "AttachmentDelete?",
+	        new FDialog.AskCallback()
+	        {
+	            @Override
+	            public void onAnswer(boolean ok)
+	            {
+	                if (!ok)
+	                    return;
+
+	                m_attachment.delete(true);
+	                dispose();
+	            }
+	        }
+	    );
+	}//	deleteAttachment
 
 	/**
 	 *	Delete Attachment Entry
@@ -521,21 +536,51 @@ public class WAttachment extends Window implements EventListener
 	
 	private void deleteAttachmentEntry()
 	{
-		log.info("");
-		
-		int index = cbContent.getSelectedIndex();
-		String fileName = getFileName(index);
-		
-		if (fileName == null)
-			return;
+	    log.info("");
 
-		if (FDialog.ask(m_WindowNo, this, "AttachmentDeleteEntry?"))
-		{
-			if (m_attachment.deleteEntry(index))
-				cbContent.removeItemAt(index);
-			
-			m_change = true;
-		}
+	    final int index = cbContent.getSelectedIndex();
+	    String fileName = getFileName(index);
+
+	    if (fileName == null)
+	        return;
+
+	    FDialog.ask(
+	        m_WindowNo,
+	        this,
+	        "AttachmentDeleteEntry?",
+	        new FDialog.AskCallback()
+	        {
+	            @Override
+	            public void onAnswer(boolean ok)
+	            {
+	                if (!ok)
+	                    return;
+
+	                if (!m_attachment.deleteEntry(index))
+	                    return;
+
+	                cbContent.removeItemAt(index);
+	                m_change = true;
+
+	                int itemCount = cbContent.getItemCount();
+
+	                if (itemCount > 0)
+	                {
+	                    int newIndex = Math.min(index, itemCount - 1);
+	                    cbContent.setSelectedIndex(newIndex);
+	                    displayData(newIndex, false);
+	                }
+	                else
+	                {
+	                    preview.setContent(null);
+	                    preview.setVisible(false);
+	                    bDelete.setEnabled(false);
+	                    bSave.setEnabled(false);
+	                    displayIndex = -1;
+	                }
+	            }
+	        }
+	    );
 	}	//	deleteAttachment
 
 	/**

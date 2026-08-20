@@ -137,6 +137,8 @@ public class LoginPanel extends Window implements EventListener
 
     private void init()
     {
+    	this.setSclass("login-panel");
+
     	Div div = new Div();
     	div.setSclass(ITheme.LOGIN_BOX_HEADER_CLASS);
     	Label label = new Label("Login");
@@ -147,7 +149,8 @@ public class LoginPanel extends Window implements EventListener
     	Table table = new Table();
     	table.setId("grdLogin");
     	table.setDynamicProperty("cellpadding", "0");
-    	table.setDynamicProperty("cellspacing", "5");
+    	table.setDynamicProperty("cellspacing", "0");
+    	table.setStyle("border-collapse:separate; border-spacing:0 5px;");
     	table.setSclass(ITheme.LOGIN_BOX_BODY_CLASS);
 
     	this.appendChild(table);
@@ -159,12 +162,13 @@ public class LoginPanel extends Window implements EventListener
     	tr.appendChild(td);
     	td.setDynamicProperty("colspan", "2");
     	Image image = new Image();
-        image.setSrc(ThemeManager.getLargeLogo());
-        td.appendChild(image);
+    	image.setSrc(ThemeManager.getLargeLogo());
+    	td.appendChild(image);
 
-        tr = new Tr();
-        tr.setId("rowUser");
-        table.appendChild(tr);
+    	tr = new Tr();
+    	tr.setId("rowUser");
+    	tr.setStyle("height:26px;");
+    	table.appendChild(tr);
     	td = new Td();
     	tr.appendChild(td);
     	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
@@ -175,8 +179,9 @@ public class LoginPanel extends Window implements EventListener
     	td.appendChild(txtUserId);
 
     	tr = new Tr();
-        tr.setId("rowPassword");
-        table.appendChild(tr);
+    	tr.setId("rowPassword");
+    	tr.setStyle("height:26px;");
+    	table.appendChild(tr);
     	td = new Td();
     	tr.appendChild(td);
     	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
@@ -187,8 +192,9 @@ public class LoginPanel extends Window implements EventListener
     	td.appendChild(txtPassword);
 
     	tr = new Tr();
-        tr.setId("rowLanguage");
-        table.appendChild(tr);
+    	tr.setId("rowLanguage");
+    	tr.setStyle("height:26px;");
+    	table.appendChild(tr);
     	td = new Td();
     	tr.appendChild(td);
     	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
@@ -197,65 +203,70 @@ public class LoginPanel extends Window implements EventListener
     	td.setSclass(ITheme.LOGIN_FIELD_CLASS);
     	tr.appendChild(td);
     	td.appendChild(lstLanguage);
-    	
-    	Optional<Hashtable<Integer, Map<String, String>>> maybeoAuthServices = Optional.ofNullable(OpenIDUtil.getAuthenticationServices());
-        maybeoAuthServices.ifPresent(authenticacionServices-> {
-        	if (authenticacionServices.size() > 0) {
-        		authenticacionServices.entrySet().forEach(authenticationService -> {
-	        		Tr row = new Tr();
-	        		row.setId("rowOpenId_" + authenticationService.getKey());
-	                table.appendChild(row);
-	                Td cell = new Td();
-	            	row.appendChild(cell);
-	            	cell.setSclass(ITheme.LOGIN_LABEL_CLASS);
-	            	
-	        		Toolbarbutton tb = new Toolbarbutton(authenticationService.getValue().get(OpenIDUtil.DISPLAYNAME));
-	        		
-		        	tb.setHref(authenticationService.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI));
-		        	
-		        	cell = new Td();
-		        	cell.setSclass(ITheme.LOGIN_FIELD_CLASS);
-		        	row.appendChild(cell);
-		        	cell.appendChild(tb);
-	        	});
-        	}
-        });
-        
-        Optional<String> maybeOpenIDErrorMessage = Optional.ofNullable(OpenIDUtil.getErrorMessage(ctx));
-        maybeOpenIDErrorMessage.ifPresent(errorMessage -> {
-        	if (!errorMessage.isEmpty()) {
-        		lblOpenIDErrorMessage.setValue(errorMessage);
-        		lblOpenIDErrorMessage.setClass(ITheme.LOGIN_ERROR_CLASS);
-        		Tr row = new Tr();
-        		row.setId("rowOpenIdError");
-                table.appendChild(row);
-                Td cell = new Td();
-            	row.appendChild(cell);
 
-            	cell = new Td();
-	        	cell.setSclass(ITheme.LOGIN_ERROR_CLASS);
-	        	row.appendChild(cell);
-	        	cell.appendChild(lblOpenIDErrorMessage);
-        	}
-        });
-        
+    	Optional<Hashtable<Integer, Map<String, String>>> maybeoAuthServices = Optional.ofNullable(OpenIDUtil.getAuthenticationServices());
+    	maybeoAuthServices.ifPresent(authenticacionServices -> {
+    		if (authenticacionServices.size() > 0) {
+    			authenticacionServices.entrySet().forEach(authenticationService -> {
+    				Tr row = new Tr();
+    				row.setId("rowOpenId_" + authenticationService.getKey());
+    				row.setStyle("height:26px;");
+    				table.appendChild(row);
+
+    				Td cell = new Td();
+    				row.appendChild(cell);
+    				cell.setSclass(ITheme.LOGIN_LABEL_CLASS);
+
+    				Toolbarbutton tb = new Toolbarbutton(authenticationService.getValue().get(OpenIDUtil.DISPLAYNAME));
+    				tb.setHref(authenticationService.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI));
+
+    				cell = new Td();
+    				cell.setSclass(ITheme.LOGIN_FIELD_CLASS);
+    				row.appendChild(cell);
+    				cell.appendChild(tb);
+    			});
+    		}
+    	});
+
+    	Optional<String> maybeOpenIDErrorMessage = Optional.ofNullable(OpenIDUtil.getErrorMessage(ctx));
+    	maybeOpenIDErrorMessage.ifPresent(errorMessage -> {
+    		if (!errorMessage.isEmpty()) {
+    			lblOpenIDErrorMessage.setValue(errorMessage);
+    			lblOpenIDErrorMessage.setClass(ITheme.LOGIN_ERROR_CLASS);
+
+    			Tr row = new Tr();
+    			row.setId("rowOpenIdError");
+    			row.setStyle("height:26px;");
+    			table.appendChild(row);
+
+    			Td cell = new Td();
+    			row.appendChild(cell);
+
+    			cell = new Td();
+    			cell.setSclass(ITheme.LOGIN_ERROR_CLASS);
+    			row.appendChild(cell);
+    			cell.appendChild(lblOpenIDErrorMessage);
+    		}
+    	});
 
     	if (MSystem.isZKRememberUserAllowed()) {
-        	tr = new Tr();
-            tr.setId("rowRememberMe");
-            table.appendChild(tr);
-        	td = new Td();
-        	tr.appendChild(td);
-        	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
-        	td.appendChild(new Label(""));
-        	td = new Td();
-        	td.setSclass(ITheme.LOGIN_FIELD_CLASS);
-        	tr.appendChild(td);
-        	td.appendChild(chkRememberMe);
+    		tr = new Tr();
+    		tr.setId("rowRememberMe");
+    		tr.setStyle("height:26px;");
+    		table.appendChild(tr);
+    		td = new Td();
+    		tr.appendChild(td);
+    		td.setSclass(ITheme.LOGIN_LABEL_CLASS);
+    		td.appendChild(new Label(""));
+    		td = new Td();
+    		td.setSclass(ITheme.LOGIN_FIELD_CLASS);
+    		tr.appendChild(td);
+    		td.appendChild(chkRememberMe);
     	}
-    	
+
     	tr = new Tr();
     	tr.setId("rowPasswordReset");
+    	tr.setStyle("height:26px;");
     	table.appendChild(tr);
     	td = new Td();
     	tr.appendChild(td);
@@ -265,130 +276,136 @@ public class LoginPanel extends Window implements EventListener
     	tr.appendChild(td);
     	td.setDynamicProperty("colspan", "2");
     	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
-    	td.setStyle("text-align:left");
+    	td.setStyle("text-align:center");
     	td.appendChild(btnForgotPass);
-    	btnForgotPass.addEventListener(Events.ON_CLICK,this);
+    	btnForgotPass.addEventListener(Events.ON_CLICK, this);
 
     	div = new Div();
     	div.setSclass(ITheme.LOGIN_BOX_FOOTER_CLASS);
-        ConfirmPanel pnlButtons = new ConfirmPanel(false);
-        pnlButtons.addActionListener(this);
-        LayoutUtils.addSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS, pnlButtons);
-        pnlButtons.setWidth(null);
-        pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
-        div.appendChild(pnlButtons);
-        this.appendChild(div);
+    	ConfirmPanel pnlButtons = new ConfirmPanel(false);
+    	pnlButtons.addActionListener(this);
+    	LayoutUtils.addSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS, pnlButtons);
+    	pnlButtons.setWidth(null);
+    	pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+    	pnlButtons.getButton(ConfirmPanel.A_OK).setImage("images/Ok16.png");
+    	pnlButtons.getButton(ConfirmPanel.A_OK).setTooltiptext(ConfirmPanel.A_OK);
+    	pnlButtons.getButton(ConfirmPanel.A_OK).setStyle("min-width:72px; height:32px;");
+    	div.appendChild(pnlButtons);
+    	this.appendChild(div);
 
-        this.setAuService(new GlobalCommandDispatcher(this));
+    	this.setAuService(new GlobalCommandDispatcher(this));
 
-        this.addEventListener(TokenEvent.ON_USER_TOKEN, new EventListener() {
-
-			@Override
-			public void onEvent(Event event) throws Exception {
-				String[] data = (String[]) event.getData();
-				try
-				{
-					int AD_Session_ID = Integer.parseInt(data[0]);
-					MSession session = new MSession(Env.getCtx(), AD_Session_ID, null);
-					if (session.get_ID() == AD_Session_ID)
-					{
-						int AD_User_ID = session.getCreatedBy();
-						MUser user = MUser.get(Env.getCtx(), AD_User_ID);
-						if (user != null && user.get_ID() == AD_User_ID)
-						{
-						    String token = data[1];
-						    if (BrowserToken.validateToken(session, user, token))
-						    {
-						    	if (MSystem.isZKRememberUserAllowed()) {
-						    		txtUserId.setValue(user.getName());
-							    	onUserIdChange();
-							    	chkRememberMe.setChecked(true);
-						    	}
-						    	if (MSystem.isZKRememberPasswordAllowed()) {
-							    	txtPassword.setValue(token);
-							    	txtPassword.setAttribute("user.token.hash", token);
-							    	txtPassword.setAttribute("user.token.sid", AD_Session_ID);
-						    	}
-						    }
-						}
-					}
-				} catch (Exception e) {
-					//safe to ignore
-					logger.log(Level.INFO, e.getLocalizedMessage(), e);
-				}
-			}
-		});
+    	this.addEventListener(TokenEvent.ON_USER_TOKEN, new EventListener() {
+    		@Override
+    		public void onEvent(Event event) throws Exception {
+    			String[] data = (String[]) event.getData();
+    			try {
+    				int AD_Session_ID = Integer.parseInt(data[0]);
+    				MSession session = new MSession(Env.getCtx(), AD_Session_ID, null);
+    				if (session.get_ID() == AD_Session_ID) {
+    					int AD_User_ID = session.getCreatedBy();
+    					MUser user = MUser.get(Env.getCtx(), AD_User_ID);
+    					if (user != null && user.get_ID() == AD_User_ID) {
+    						String token = data[1];
+    						if (BrowserToken.validateToken(session, user, token)) {
+    							if (MSystem.isZKRememberUserAllowed()) {
+    								txtUserId.setValue(user.getName());
+    								onUserIdChange();
+    								chkRememberMe.setChecked(true);
+    							}
+    							if (MSystem.isZKRememberPasswordAllowed()) {
+    								txtPassword.setValue(token);
+    								txtPassword.setAttribute("user.token.hash", token);
+    								txtPassword.setAttribute("user.token.sid", AD_Session_ID);
+    							}
+    						}
+    					}
+    				}
+    			} catch (Exception e) {
+    				logger.log(Level.INFO, e.getLocalizedMessage(), e);
+    			}
+    		}
+    	});
     }
 
     private void initComponents()
     {
-        lblUserId = new Label();
-        lblUserId.setId("lblUserId");
-        lblUserId.setValue("User ID");
+    	lblUserId = new Label();
+    	lblUserId.setId("lblUserId");
+    	lblUserId.setValue("User ID");
 
-        lblPassword = new Label();
-        lblPassword.setId("lblPassword");
-        lblPassword.setValue("Password");
+    	lblPassword = new Label();
+    	lblPassword.setId("lblPassword");
+    	lblPassword.setValue("Password");
 
-        lblLanguage = new Label();
-        lblLanguage.setId("lblLanguage");
-        lblLanguage.setValue("Language");
-        
-        lblOpenIDErrorMessage = new Label();
-        lblOpenIDErrorMessage.setId("lblOpenIDErrorMessage");
-        lblOpenIDErrorMessage.setValue("");
+    	lblLanguage = new Label();
+    	lblLanguage.setId("lblLanguage");
+    	lblLanguage.setValue("Language");
 
-        txtUserId = new Textbox();
-        txtUserId.setId("txtUserId");
-        txtUserId.setCols(25);
-        txtUserId.setMaxlength(40);
-        txtUserId.setWidth("220px");
-        txtUserId.addEventListener(Events.ON_CHANGE, this); // Elaine 2009/02/06
+    	lblOpenIDErrorMessage = new Label();
+    	lblOpenIDErrorMessage.setId("lblOpenIDErrorMessage");
+    	lblOpenIDErrorMessage.setValue("");
 
-        txtPassword = new Textbox();
-        txtPassword.setId("txtPassword");
-        txtPassword.setType("password");
-        txtPassword.setCols(25);
-//        txtPassword.setMaxlength(40);
-        txtPassword.setWidth("220px");
+    	txtUserId = new Textbox();
+    	txtUserId.setId("txtUserId");
+    	txtUserId.setCols(25);
+    	txtUserId.setMaxlength(40);
+    	txtUserId.setWidth("220px");
+    	txtUserId.setHeight("20px");
+    	txtUserId.setStyle("height:20px; min-height:20px; line-height:20px; font-size:12px; padding:0 4px;");
+    	txtUserId.addEventListener(Events.ON_CHANGE, this);
 
-        lstLanguage = new Combobox();
-        lstLanguage.setAutocomplete(true);
-        lstLanguage.setAutodrop(true);
-        lstLanguage.setId("lstLanguage");
-        lstLanguage.addEventListener(Events.ON_SELECT, this);
-        lstLanguage.setWidth("220px");
+    	txtPassword = new Textbox();
+    	txtPassword.setId("txtPassword");
+    	txtPassword.setType("password");
+    	txtPassword.setCols(25);
+    	txtPassword.setWidth("220px");
+    	txtPassword.setHeight("20px");
+    	txtPassword.setStyle("height:20px; min-height:20px; line-height:20px; font-size:12px; padding:0 4px;");
 
-        // Update Language List
-        lstLanguage.getItems().clear();
-        ArrayList<String> supported = Env.getSupportedLanguages();
-        String[] availableLanguages = Language.getNames();
-        for (String langName : availableLanguages) {
-            Language language = Language.getLanguage(langName);
-            if (!language.isBaseLanguage()) {
-                if (!supported.contains(language.getAD_Language()))
-                    continue;
-            }
-            lstLanguage.appendItem(langName, language.getAD_Language());
-        }
-
-        chkRememberMe = new Checkbox(Msg.getMsg(Language.getBaseAD_Language(), "RememberMe"));
-
-        btnForgotPass = new ToolBarButton(Msg.getMsg(Language.getBaseAD_Language(), "ForgotPassword"));
+    	lstLanguage = new Combobox();
+    	lstLanguage.setAutocomplete(true);
+    	lstLanguage.setAutodrop(true);
+    	lstLanguage.setId("lstLanguage");
+    	lstLanguage.addEventListener(Events.ON_SELECT, this);
+    	lstLanguage.setWidth("220px");
+    	/* PRUEBA VISUAL FORZADA */
+    	lstLanguage.setStyle(
+    		"height:20px !important;" +
+    		"min-height:20px !important;" +
+    		"background:red !important;" +
+    		"border:3px solid red !important;"
+    	);
     	
-        // Make the default language the language of client System
-        String defaultLanguage = MClient.get(ctx, 0).getAD_Language();
-        for(int i = 0; i < lstLanguage.getItemCount(); i++)
-        {
-        	Comboitem li = lstLanguage.getItemAtIndex(i);
-        	if (li.getValue().equals(defaultLanguage))
-        	{
-        		lstLanguage.setSelectedIndex(i);
-        		languageChanged(li.getLabel());
-        		break;
-        	}
-        }
-   }
+    	lstLanguage.setHeight("20px");
+    	lstLanguage.setStyle("height:20px; min-height:20px; line-height:20px; font-size:12px;");
+
+    	lstLanguage.getItems().clear();
+    	ArrayList<String> supported = Env.getSupportedLanguages();
+    	String[] availableLanguages = Language.getNames();
+    	for (String langName : availableLanguages) {
+    		Language language = Language.getLanguage(langName);
+    		if (!language.isBaseLanguage()) {
+    			if (!supported.contains(language.getAD_Language()))
+    				continue;
+    		}
+    		lstLanguage.appendItem(langName, language.getAD_Language());
+    	}
+
+    	chkRememberMe = new Checkbox(Msg.getMsg(Language.getBaseAD_Language(), "RememberMe"));
+
+    	btnForgotPass = new ToolBarButton(Msg.getMsg(Language.getBaseAD_Language(), "ForgotPassword"));
+
+    	String defaultLanguage = MClient.get(ctx, 0).getAD_Language();
+    	for (int i = 0; i < lstLanguage.getItemCount(); i++) {
+    		Comboitem li = lstLanguage.getItemAtIndex(i);
+    		if (li.getValue().equals(defaultLanguage)) {
+    			lstLanguage.setSelectedIndex(i);
+    			languageChanged(li.getLabel());
+    			break;
+    		}
+    	}
+    }
 
     public void onEvent(Event event)
     {

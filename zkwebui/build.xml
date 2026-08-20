@@ -54,6 +54,7 @@
   <target name="compile" depends="clean" description="Compilar fuentes Java">
     <mkdir dir="${classes.dir}" />
     <javac target="11"
+           source="11"
            encoding="UTF-8"
            srcdir="WEB-INF/src"
            destdir="${classes.dir}"

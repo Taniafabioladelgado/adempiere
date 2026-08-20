@@ -218,9 +218,12 @@ public class WCharge extends Charge implements IFormController, EventListener
         return;
     }
 
-    private void zkInit()
+	private void zkInit()
 	{
 		Borderlayout contentPane = new Borderlayout();
+		contentPane.setHflex("1");
+		contentPane.setVflex("1");
+		contentPane.setStyle("margin:0; padding:0;");
 		form.appendChild(contentPane);
 
 		North north = new North();
@@ -249,9 +252,9 @@ public class WCharge extends Charge implements IFormController, EventListener
     private void createAccountPanel()
     {
     	Borderlayout borderlayout = new Borderlayout();
-    	borderlayout.setStyle("position: absolute");
-    	borderlayout.setWidth("100%");
-    	borderlayout.setHeight("100%");
+    	borderlayout.setHflex("1");
+    	borderlayout.setVflex("1");
+    	borderlayout.setStyle("margin:0; padding:0;");
     	m_pnlAccount.appendChild(borderlayout);
 
 		North north = new North();
@@ -472,5 +475,3 @@ public class WCharge extends Charge implements IFormController, EventListener
 		return form;
 	}
 }
-
-

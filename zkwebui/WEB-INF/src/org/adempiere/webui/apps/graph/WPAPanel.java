@@ -55,8 +55,9 @@ public class WPAPanel extends Panel implements EventListener
 	{
 		Grid grid = new Grid();
 		appendChild(grid);
-		grid.setWidth("100%");
-		grid.setStyle("margin:0; padding:0; position: absolute;");
+		grid.setHflex("1");
+		grid.setVflex("1");
+		grid.setStyle("margin:0; padding:0;");
 		grid.makeNoStrip();
 		grid.setOddRowSclass("even");
 

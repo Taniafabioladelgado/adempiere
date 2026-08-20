@@ -27,7 +27,6 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Box;
-import org.zkoss.zul.Separator;
 import org.zkoss.zul.Vbox;
 
 /**
@@ -84,7 +83,6 @@ public class DPViews extends DashboardPanel implements EventListener {
 			btnViewItem.addEventListener(Events.ON_CLICK, this);
 			vbox.appendChild(btnViewItem);
 		}
-		vbox.appendChild(new Separator("horizontal"));
 		if (MRole.getDefault().isAllow_Info_Order())
 		{
 			ToolBarButton btnViewItem = new ToolBarButton("InfoOrder");

@@ -83,6 +83,7 @@ public class MenuPanel extends Panel implements EventListener
     {
     	this.setWidth("100%");
     	this.setHeight("100%");
+    	this.setStyle("display:flex; flex-direction:column; width:100%; height:100%; padding:0; margin:0; overflow:hidden; box-sizing:border-box;");
     	
         menuTree = new Tree();
         menuTree.setMultiple(false);
@@ -95,19 +96,27 @@ public class MenuPanel extends Panel implements EventListener
         menuTree.setStyle("border: none");
         
         pnlSearch = new TreeSearchPanel(menuTree);
+        pnlSearch.setHflex("1");
         
         Toolbar toolbar = new Toolbar();
+        toolbar.setWidth("100%");
+        toolbar.setStyle("height:auto; min-height:42px; padding:7px 8px; margin:0; overflow:visible; box-sizing:border-box;");
         toolbar.appendChild(pnlSearch);
         this.appendChild(toolbar);
         
         Panelchildren pc = new Panelchildren();
+        pc.setStyle("flex:1 1 auto; min-height:0; padding:0; margin:0; overflow:auto; box-sizing:border-box;");
+//        pc.setVflex("1"); ya no lo soporta ZK10
         this.appendChild(pc);
         pc.appendChild(menuTree);  
         
         // Elaine 2009/02/27 - expand tree
         toolbar = new Toolbar();
+        toolbar.setWidth("100%");
+        toolbar.setStyle("height:auto; min-height:36px; padding:6px 8px; margin:0; overflow:visible; box-sizing:border-box;");
         chkExpand = new Checkbox();
         chkExpand.setText(Msg.getMsg(Env.getCtx(), "ExpandTree"));
+        chkExpand.setStyle("font-size:13px; line-height:20px;");
         chkExpand.addEventListener(Events.ON_CHECK, this);
         toolbar.appendChild(chkExpand);
         this.appendChild(toolbar);

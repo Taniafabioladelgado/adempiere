@@ -339,59 +339,93 @@ public class WDocActionPanel extends Window implements EventListener
 
 	private void setValue()
 	{
-	    int index = getSelectedIndex();
+	    Listitem selectedItem = lstDocAction.getSelectedItem();
 
-	    String docAction = s_value[index];
+	    if (selectedItem == null || selectedItem.getValue() == null)
+	    {
+	        throw new AdempiereException("Debe seleccionar una acción de documento");
+	    }
 
-	    logger.config("DocAction=" + docAction);
+	    String selectedDocAction = selectedItem.getValue().toString();
 
-	    if (docAction == null || "--".equals(docAction))
+	    logger.config("DocAction=" + selectedDocAction);
+
+	    if (selectedDocAction.trim().isEmpty()
+	            || "--".equals(selectedDocAction))
 	    {
 	        throw new AdempiereException("DocAction inválido");
 	    }
 
-	    gridTab.setValue("DocAction", docAction);
+	    gridTab.setValue("DocAction", selectedDocAction);
 
 	    if (!gridTab.dataSave(false))
-	        return;
+	    {
+	        throw new AdempiereException(
+	            "No fue posible guardar la acción seleccionada"
+	        );
+	    }
 
 	    int tableId = gridTab.getAD_Table_ID();
 	    int recordId = gridTab.getRecord_ID();
 
 	    PO po = MTable.get(Env.getCtx(), tableId).getPO(recordId, null);
 
-	    if (!(po instanceof DocAction))
+	    if (po == null)
 	    {
-	        throw new AdempiereException("El documento no implementa DocAction");
+	        throw new AdempiereException(
+	            "No se encontró el documento. "
+	            + "AD_Table_ID=" + tableId
+	            + ", Record_ID=" + recordId
+	        );
 	    }
 
-	    DocAction doc = (DocAction) po;
+	    if (!(po instanceof DocAction))
+	    {
+	        throw new AdempiereException(
+	            "El documento no implementa DocAction"
+	        );
+	    }
+
+	    DocAction document = (DocAction) po;
 
 	    try
 	    {
-	        if (!doc.processIt(docAction))
+	        boolean processed = document.processIt(selectedDocAction);
+
+	        if (!processed)
 	        {
-	            throw new AdempiereException(doc.getProcessMsg());
+	            String processMessage = document.getProcessMsg();
+
+	            if (processMessage == null
+	                    || processMessage.trim().isEmpty())
+	            {
+	                processMessage =
+	                    "La acción fue rechazada sin entregar un mensaje. "
+	                    + "Acción=" + selectedDocAction
+	                    + ", estado=" + document.getDocStatus();
+	            }
+
+	            throw new AdempiereException(processMessage);
 	        }
 
-	        ((PO) doc).saveEx();
+	        po.saveEx();
+
+	        logger.info(
+	            "Documento procesado correctamente. "
+	            + "Acción=" + selectedDocAction
+	            + ", estado=" + document.getDocStatus()
+	            + ", mensaje=" + document.getProcessMsg()
+	        );
 	    }
 	    catch (Exception e)
 	    {
-	        throw new AdempiereException("Error procesando documento: " + e.getMessage(), e);
+	        throw new AdempiereException(
+	            "Error procesando documento: " + e.getMessage(),
+	            e
+	        );
 	    }
 
 	    gridTab.dataRefresh(true);
-
-	    String status = doc.getDocStatus();
-	    String msg = doc.getProcessMsg();
-
-	    if (!"CO".equals(status))
-	    {
-	        throw new AdempiereException(
-	            "No completado. Status=" + status + " Msg=" + msg
-	        );
-	    }
 	}
 	
 	 private void readReference()

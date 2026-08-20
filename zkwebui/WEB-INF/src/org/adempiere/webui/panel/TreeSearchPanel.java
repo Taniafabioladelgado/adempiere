@@ -30,7 +30,6 @@ import org.adempiere.webui.util.TreeUtils;
 import org.compiere.model.MTreeNode;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -105,35 +104,64 @@ public class TreeSearchPanel extends Panel implements EventListener, TreeDataLis
 
     private void init()
     {
-    	Div div = new Div();
+        Div div = new Div();
+
         lblSearch = new Label();
-        //	[ #1118 ] Remove Class
-        //	LayoutUtils.addSclass("desktop-header-font", lblSearch);
-        
         lblSearch.setValue(Msg.getMsg(Env.getCtx(),"TreeSearch").replaceAll("&", "") + ":");
         lblSearch.setTooltiptext(Msg.getMsg(Env.getCtx(),"TreeSearchText"));
+
         div.appendChild(lblSearch);
-        String divStyle = " height: 20px; vertical-align: middle;";
-        if (!AEnv.isInternetExplorer())
-        {
-        	divStyle += "margin-bottom: 10px; display: inline-block;";
-        }
-        div.setStyle(divStyle);
+        div.setStyle(
+                "display:flex;"
+              + "align-items:center;"
+              + "justify-content:flex-start;"
+              + "height:32px;"
+              + "min-width:auto;"
+              + "width:auto;"
+              + "padding:0;"
+              + "margin:0;"
+              + "white-space:nowrap;"
+              + "box-sizing:border-box;"
+        );
 
         cmbSearch = new AutoComplete();
         cmbSearch.setAutodrop(true);
         cmbSearch.addEventListener(Events.ON_CHANGE, this);
+
         if (AEnv.isInternetExplorer())
         {
-        	cmbSearch.setWidth("200px");
+            cmbSearch.setHflex("min");
+            cmbSearch.setWidth("200px");
         }
+        else
+        {
+            cmbSearch.setHflex("1");
+        }
+
+        cmbSearch.setStyle(
+                "height:32px;"
+              + "min-height:32px;"
+              + "box-sizing:border-box;"
+        );
 
         this.appendChild(div);
         this.appendChild(cmbSearch);
-        if (!AEnv.isInternetExplorer())
-        {
-        	this.setStyle("height: 20px; padding: 7px;");
-    	}
+
+        // ZK10: no usar setWidth("100%") junto con setHflex("1")
+        this.setHflex("1");
+        this.setSclass("eureka-menu-search-panel");
+
+        this.setStyle(
+                "display:flex;"
+              + "align-items:center;"
+              + "height:32px;"
+              + "min-height:32px;"
+              + "padding:0;"
+              + "margin:0;"
+              + "gap:6px;"
+              + "overflow:hidden;"
+              + "box-sizing:border-box;"
+        );
     }
 
     private void addTreeItem(Treeitem treeItem)
@@ -243,8 +271,6 @@ public class TreeSearchPanel extends Panel implements EventListener, TreeDataLis
                 select(treeItem);
                 Clients.showBusy("Procesando...");
                 Events.echoEvent("onPostSelect", this, null);
-                Event event2=new Event(Events.ON_CLICK, ((Component)(treeItem.getTreerow().getChildren().get(0))));
-                Events.postEvent(event2);
 				cmbSearch.setText(null);
             }
         }
@@ -254,15 +280,17 @@ public class TreeSearchPanel extends Panel implements EventListener, TreeDataLis
      * don't call this directly, use internally for post selection event
      */
     public void onPostSelect() {
-    	Clients.showBusy("Procesando...");
-    	Event event = null;
-    	if(tree.getSelectedItem() == null && eventToFire.equals(Events.ON_CLICK))
-    		return;
-    	if (eventToFire.equals(Events.ON_CLICK) )
-    		event = new Event(Events.ON_CLICK, tree.getSelectedItem().getTreerow());
-    	else
-    		event = new Event(eventToFire, tree);
-    	Events.postEvent(event);
+    	try {
+    		if(tree.getSelectedItem() == null && eventToFire.equals(Events.ON_CLICK))
+    			return;
+    		if (eventToFire.equals(Events.ON_CLICK) )
+    			Events.sendEvent(tree.getSelectedItem().getTreerow(),
+    					new Event(Events.ON_CLICK, tree.getSelectedItem().getTreerow()));
+    		else
+    			Events.sendEvent(tree, new Event(eventToFire, tree));
+    	} finally {
+    		Clients.clearBusy();
+    	}
     }
 
 	private void select(Treeitem selectedItem) {

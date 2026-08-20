@@ -1576,6 +1576,12 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
      */
     public void onFind()
     {
+    	if (toolbar == null || toolbar.getCurrentPanel() == null)
+        {
+            logger.warning("onFind ignorado: no existe un panel de pestaña activo");
+            return;
+        }
+
     	GridTab currentTab = toolbar.getCurrentPanel().getGridTab();
 
     	if (currentTab == null)
@@ -1595,7 +1601,18 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         //  Confirmed query
         if (query != null)
         {
+            if (toolbar == null || toolbar.getCurrentPanel() == null || curTabPanel == null)
+            {
+                logger.warning("onFindCallback ignorado: no existe un panel de pestaña activo");
+                return;
+            }
+
         	GridTab currentTab = toolbar.getCurrentPanel().getGridTab();
+            if (currentTab == null)
+            {
+                logger.warning("onFindCallback ignorado: el panel activo no tiene GridTab");
+                return;
+            }
         	m_onlyCurrentRows = false;          //  search history too
             currentTab.setQuery(query);
             curTabPanel.query(m_onlyCurrentRows, m_onlyCurrentDays, MRole.getDefault().getMaxQueryRecords());   //  autoSize

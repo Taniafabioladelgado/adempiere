@@ -82,12 +82,12 @@ public class ADTreePanel extends Panel implements EventListener
     
     private void init()
     {
-    	this.setWidth("100%");
-    	this.setHeight("100%");
+    	this.setHflex("1");
+    	this.setVflex("1");
     	
         tree = new Tree();
         tree.setMultiple(false);
-        tree.setWidth("100%");
+        tree.setHflex("1");
         tree.setVflex(true);
         tree.setPageSize(-1); // Due to bug in the new paging functionality
         

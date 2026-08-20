@@ -108,15 +108,19 @@ public class NavBar2Desktop extends TabbedDesktop implements MenuListener, Seria
         pnlSide.getMenuPanel().addMenuListener(this);
 
         layout = new Borderlayout();
+        layout.setStyle("margin:0; padding:0;");
         if (parent != null)
         {
         	layout.setParent(parent);
-        	layout.setWidth("100%");
-        	layout.setHeight("100%");
-        	layout.setStyle("position: absolute");
+        	layout.setHflex("1");
+        	layout.setVflex("1");
         }
         else
+        {
         	layout.setPage(page);
+        	layout.setWidth("100%");
+        	layout.setHeight("100%");
+        }
 
 		dashboardRunnable = new DashboardRunnable(layout.getDesktop(), this);
 
@@ -128,9 +132,14 @@ public class NavBar2Desktop extends TabbedDesktop implements MenuListener, Seria
 
         West w = new West();
         layout.appendChild(w);
-        w.setWidth("300px");
+        w.setSize("300px");
+        w.setMinsize(240);
+        w.setMaxsize(560);
         w.setCollapsible(true);
         w.setSplittable(true);
+        w.setSlidable(false);
+        w.setSclass("desktop-main-menu");
+        w.setStyle("border-right:2px solid #7f9cab;");
         w.setTitle(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Menu")));
         w.addEventListener(Events.ON_OPEN, new EventListener() {			
 			@Override
@@ -142,12 +151,15 @@ public class NavBar2Desktop extends TabbedDesktop implements MenuListener, Seria
 			}
 		});
         UserPreference pref = SessionManager.getUserPreference();
-        boolean menuCollapsed= pref.isPropertyBool(UserPreference.P_MENU_COLLAPSED);
-        w.setOpen(!menuCollapsed);
+        pref.setProperty(UserPreference.P_MENU_COLLAPSED, true);
+        pref.savePreference();
+        w.setOpen(false);
         pnlSide.setParent(w);        
 
         Center center = new Center();
         center.setParent(layout);
+        center.setHflex("1");
+        center.setVflex("1");
 
         Borderlayout innerLayout = new Borderlayout();
         innerLayout.setHflex("1");
@@ -184,6 +196,8 @@ public class NavBar2Desktop extends TabbedDesktop implements MenuListener, Seria
 
         windowArea = new Center();
         windowArea.setParent(innerLayout);
+        windowArea.setHflex("1");
+        windowArea.setVflex("1");
 
         windowContainer.createPart(windowArea);
 
@@ -451,8 +465,8 @@ public class NavBar2Desktop extends TabbedDesktop implements MenuListener, Seria
 
 	    West west = layout.getWest();
 
-	    if (west.isCollapsible() && !west.isOpen()) {
-	        west.setOpen(true);
+	    if (west.isCollapsible() && west.isOpen()) {
+	        west.setOpen(false);
 	        west.invalidate();
 	    }
 	}

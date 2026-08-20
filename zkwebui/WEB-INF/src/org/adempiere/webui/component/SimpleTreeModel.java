@@ -89,37 +89,84 @@ public class SimpleTreeModel extends DefaultTreeModel<MTreeNode> implements Tree
         return treeModel;
     }
 
+    /**
+     * Convierte el árbol de Eureka al modelo utilizado por ZK.
+     *
+     * Los nodos con hijos se crean como ramas y los nodos finales
+     * se crean como hojas para evitar que ZK muestre una flecha
+     * de expansión incorrecta.
+     */
     public static SimpleTreeModel createFrom(MTreeNode root) {
-        Enumeration<javax.swing.tree.TreeNode> nodeEnum = root.children();
 
-        DefaultTreeNode stRoot = new DefaultTreeNode(root, new ArrayList());
+        DefaultTreeNode stRoot =
+            new DefaultTreeNode(root, new ArrayList());
+
+        Enumeration<javax.swing.tree.TreeNode> nodeEnum =
+            root.children();
 
         while (nodeEnum.hasMoreElements()) {
-            MTreeNode childNode = (MTreeNode) nodeEnum.nextElement();
-            DefaultTreeNode stNode = new DefaultTreeNode(childNode, new ArrayList());
 
-            stRoot.getChildren().add(stNode);
+            MTreeNode childNode =
+                (MTreeNode) nodeEnum.nextElement();
+
+            DefaultTreeNode stNode;
 
             if (childNode.getChildCount() > 0) {
+
+                // Nodo que realmente contiene hijos.
+                stNode = new DefaultTreeNode(
+                    childNode,
+                    new ArrayList()
+                );
+
                 populate(stNode, childNode);
+
+            } else {
+
+                // Nodo final: no debe mostrar flecha de expansión.
+                stNode = new DefaultTreeNode(childNode);
             }
+
+            stRoot.getChildren().add(stNode);
         }
 
         return new SimpleTreeModel(stRoot);
     }
 
-    private static void populate(DefaultTreeNode stNode, MTreeNode root) {
-        Enumeration<javax.swing.tree.TreeNode> nodeEnum = root.children();
+    /**
+     * Agrega recursivamente los hijos de un nodo.
+     */
+    private static void populate(
+            DefaultTreeNode stNode,
+            MTreeNode root) {
+
+        Enumeration<javax.swing.tree.TreeNode> nodeEnum =
+            root.children();
 
         while (nodeEnum.hasMoreElements()) {
-            MTreeNode childNode = (MTreeNode) nodeEnum.nextElement();
-            DefaultTreeNode stChildNode = new DefaultTreeNode(childNode, new ArrayList());
 
-            stNode.getChildren().add(stChildNode);
+            MTreeNode childNode =
+                (MTreeNode) nodeEnum.nextElement();
+
+            DefaultTreeNode stChildNode;
 
             if (childNode.getChildCount() > 0) {
+
+                // Rama expandible.
+                stChildNode = new DefaultTreeNode(
+                    childNode,
+                    new ArrayList()
+                );
+
                 populate(stChildNode, childNode);
+
+            } else {
+
+                // Hoja final sin flecha.
+                stChildNode = new DefaultTreeNode(childNode);
             }
+
+            stNode.getChildren().add(stChildNode);
         }
     }
 

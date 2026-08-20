@@ -504,13 +504,13 @@ public class WBrowser extends Browser implements IFormController,
 			toolsBar.appendChild(bUpdate);
 		}
 
-		m_frame.setWidth("100%");
-		m_frame.setHeight("100%");
-		m_frame.setStyle("position: absolute; padding: 0; margin: 0");
+		//m_frame.setHflex("1");
+		//m_frame.setVflex("1");
+		m_frame.setStyle("padding: 0; margin: 0");
 		m_frame.appendChild(mainLayout);
-		mainLayout.setWidth("100%");
-		mainLayout.setHeight("100%");
-		mainLayout.setStyle("position: absolute");
+		//mainLayout.setHflex("1");
+		//mainLayout.setVflex("1");
+		mainLayout.setStyle("margin:0; padding:0;");
 
 		North north = new North();
 		north.appendChild(toolsBar);
@@ -554,14 +554,14 @@ public class WBrowser extends Browser implements IFormController,
 		searchTab.appendChild(collapsibleSeach);
 
 		detail.setWidth("100%");
-		detail.setHeight("100%");
+		//detail.setHeight("100%");
 		Center dCenter = new Center();
 		dCenter.appendChild(detail);
 		dCenter.setBorder("none");
 		detail.setVflex(true);
 		//dCenter.setFlex(true);
-		dCenter.setHflex("1");
-		dCenter.setVflex("1");
+		//dCenter.setHflex("1");
+		//dCenter.setVflex("1");
 		dCenter.setAutoscroll(true);
 		
 		detailPanel.setHeight("100%");

@@ -145,9 +145,9 @@ public class WWFActivity extends ADForm implements EventListener
 	private void init()
 	{
 		Grid grid = new Grid();
-		grid.setWidth("100%");
-        grid.setHeight("100%");
-        grid.setStyle("margin:0; padding:0; position: absolute; align: center; valign: center;");
+		grid.setHflex("1");
+        grid.setVflex("1");
+        grid.setStyle("margin:0; padding:0; align: center; valign: center;");
         grid.makeNoStrip();
         grid.setOddRowSclass("even");
 
@@ -238,9 +238,9 @@ public class WWFActivity extends ADForm implements EventListener
 		bOK.addEventListener(Events.ON_CLICK, this);
 
 		Borderlayout layout = new Borderlayout();
-		layout.setWidth("100%");
-		layout.setHeight("100%");
-		layout.setStyle("background-color: transparent; position: absolute;");
+		layout.setHflex("1");
+		layout.setVflex("1");
+		layout.setStyle("background-color: transparent;");
 
 		North north = new North();
 		north.appendChild(listbox);
@@ -265,7 +265,9 @@ public class WWFActivity extends ADForm implements EventListener
 		south.setStyle("background-color: transparent");
 
 		this.appendChild(layout);
-		this.setStyle("height: 100%; width: 100%; position: absolute;");
+		this.setHflex("1");
+		this.setVflex("1");
+		this.setStyle("margin:0; padding:0;");
 	}
 
 	public void onEvent(Event event) throws Exception

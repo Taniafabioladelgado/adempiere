@@ -29,12 +29,10 @@ import org.adempiere.exceptions.ValueChangeEvent;
 import org.adempiere.exceptions.ValueChangeListener;
 import org.adempiere.webui.ValuePreference;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.GridPanel;
 import org.adempiere.webui.component.Searchbox;
 import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.grid.WBPartner;
-import org.adempiere.webui.panel.ADTabPanel;
 import org.adempiere.webui.panel.InfoBPartnerPanel;
 import org.adempiere.webui.panel.InfoPanel;
 import org.adempiere.webui.panel.InfoPanelFactory;
@@ -57,10 +55,8 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
-import org.zkforge.keylistener.Keylistener;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zk.ui.event.KeyEvent;
 
 /**
  * Search Editor for web UI.
@@ -88,6 +84,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
     private Object              value;
     private Object				m_oldValue;
     private InfoPanel			infoPanel = null;
+    private boolean				m_searchWindowOpen = false;
     private Boolean				m_settingValue = false;
     private WSearchEditorAutoComplete autoComplete = null; // ADEMPIERE-191
     private Boolean				m_needsUpdate = false;
@@ -197,7 +194,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 		m_columnName = this.getColumnName();
                 
-		if (m_columnName.equals("C_BPartner_ID"))
+		if (m_columnName.equals("C_BPartner_ID") || m_columnName.equals("C_BPartnerImport_ID"))
 		{
 			popupMenu = new WEditorPopupMenu(true, true, true, true, true);
 			getComponent().setButtonImage("/images/BPartner10.png");
@@ -213,7 +210,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			getComponent().setButtonImage("/images/PickOpen10.png");
 		}
 		
-		getComponent().getTextbox().setContext(popupMenu.getId());
+		//getComponent().getTextbox().setContext(popupMenu.getId());
+		getComponent().setContext(popupMenu);
+		getComponent().getTextbox().setContext(popupMenu);
 		if (gridField != null && gridField.getGridTab() != null)
 		{
 			WRecordInfo.addMenu(popupMenu);
@@ -575,6 +574,21 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	{
 		if (m_lookup == null)
 			return;		//	leave button disabled
+		if (m_searchWindowOpen)
+		{
+			// Algunas rutas de cierre de ZK desasocian la ventana sin notificar
+			// ValueChange/ON_CLOSE. No conserve una guarda para un panel ya cerrado.
+			if (infoPanel != null && infoPanel.getPage() != null)
+				return;
+			infoPanel = null;
+			m_searchWindowOpen = false;
+			m_settingValue = false;
+		}
+
+		m_searchWindowOpen = true;
+		boolean lookupWindowShown = false;
+		try
+		{
 		
 		// If an infoPanel is already open, close it.
 		if (infoPanel != null)
@@ -592,8 +606,6 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 		m_settingValue = true;  // We're changing something - ignore other events;
 		//
-		Object result[] = null;			
-		boolean cancelled = false;
 		boolean multipleSelection = false;
 		boolean modal = true;
 		boolean saveResults = true;
@@ -656,7 +668,9 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			{
 				int AD_Table_ID = MColumn.getTable_ID(Env.getCtx(), m_mField.getAD_Column_ID(), null);
 				// TODO hard-coded - add to AD_Column?
-				multipleSelection = (MOrderLine.Table_ID ==  AD_Table_ID) || 
+				multipleSelection = //(MOrderLine.Table_ID ==  AD_Table_ID) ||
+									//jleyton AJAH: Only 1 product can be selected in the product window of the orders
+									(MOrderLine.Table_ID ==  1) ||
 									(MInvoiceLine.Table_ID == AD_Table_ID) || 
 									(I_PP_Product_BOMLine.Table_ID == AD_Table_ID) || 
 									(MProductPrice.Table_ID == AD_Table_ID);
@@ -693,60 +707,33 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 											record_id, queryValue, multipleSelection, saveResults, whereClause);
 		}
 		//
-		if (infoPanel != null){
-			if(this.getADTabPanel() != null && this.getADTabPanel().getListPanel() != null)
-				this.getADTabPanel().getListPanel().addKeyListener();
-			GridPanel gridQuick = null;
-			ADTabPanel tabPanel = (ADTabPanel)getADTabPanel();
-			if(tabPanel != null && tabPanel.getQuickPanel() != null) {
-				gridQuick = tabPanel.getQuickPanel();
-				gridQuick.addKeyListener();
-			}
-
-			infoPanel.addValueChangeListener(this);
-			AEnv.showWindow(infoPanel);
-			//
-			cancelled = infoPanel.isCancelled();
-			result = infoPanel.getSelectedKeys();
-			//
-			if(this.getADTabPanel() != null && this.getADTabPanel().getListPanel() != null) {
-				this.getADTabPanel().getListPanel().addKeyListener();
-				Keylistener keyListener =this.getADTabPanel().getListPanel().getKeyListener();
-				if(gridQuick != null) {
-					gridQuick.addKeyListener();
-					keyListener = gridQuick.getKeyListener();
-				}
-				if(keyListener != null && !cancelled) {
-					KeyEvent event = new KeyEvent(Events.ON_CTRL_KEY, keyListener, 13, false, false, false);
-				 	Events.postEvent(event); 
-				}
-			}
-			infoPanel = null;
-		}
-		//  Result
-		if (isReadWrite())
+		if (infoPanel != null)
 		{
-			if (result != null && result.length > 0)
+			// ZK10 modal windows return through events. Reading getSelectedKeys()
+			// immediately and replaying Enter creates a second product window.
+			infoPanel.addValueChangeListener(this);
+			// Cerrar con la X no emite ValueChange. Libere la guarda para que el
+			// mismo editor pueda abrir la búsqueda nuevamente en el siguiente clic.
+			infoPanel.addEventListener(Events.ON_CLOSE, event -> {
+				infoPanel = null;
+				m_searchWindowOpen = false;
+				m_settingValue = false;
+			});
+			m_settingValue = false;
+			AEnv.showWindow(infoPanel);
+			lookupWindowShown = true;
+		}
+		}
+		finally
+		{
+			// If ZK handled the modal asynchronously, keep the guard until
+			// valueChange receives OK/Cancel. Otherwise the window already closed.
+			if (!lookupWindowShown || infoPanel == null || infoPanel.getPage() == null)
 			{
-				//ensure data binding happen
-				if (result.length > 1)
-					actionCombo (result);
-				else
-					actionCombo (result[0]);
-			}
-			else if (cancelled)
-			{
-				log.config(getColumnName() + " - Result = null (cancelled)");
-				actionCombo(null);
-			}
-			else
-			{
-				log.config(getColumnName() + " - Result = null (not cancelled)");
-				actionCombo(getValue());  //Reset the combo box to the current value
+				m_searchWindowOpen = false;
+				m_settingValue = false;
 			}
 		}
-		else
-			m_settingValue = false;
 	}
 
 	/**
@@ -838,16 +825,12 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 					.append(" OR UPPER(UPC) LIKE ").append(DB.TO_STRING(text)).append(")");
 			}
 		}
-		else if (m_columnName.equals("C_BPartner_ID"))
+		else if (m_columnName.equals("C_BPartner_ID") || m_columnName.equals("C_BPartnerImport_ID"))
 		{
 			sql.append("SELECT C_BPartner_ID FROM C_BPartner WHERE (");
-			//	Put query string in Name if not fully numeric
-    		if (!text.matches(".*\\D+.*")) // If text has no non-digit characters ...
-    			//  search against the Value field
-				sql.append("UPPER(Value) LIKE ").append(DB.TO_STRING(text));
-    		else
-    			// A few non-digit characters might be in the name. E.g. 451Group, 1st Choice, ...
-    			sql.append("UPPER(Name) LIKE ").append(DB.TO_STRING(text)); 
+			// AJAH: search for matches in value or name independent of data type.
+			sql.append("UPPER(Value) LIKE ").append(DB.TO_STRING(text))
+			   .append(" OR UPPER(Name) LIKE ").append(DB.TO_STRING(text));
 			sql.append(")");
 		}
 		else if (m_columnName.equals("C_Order_ID"))
@@ -1067,15 +1050,21 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 
 	public void valueChange(ValueChangeEvent evt)
 	{
-        	if ("zoom".equals(evt.getPropertyName()))
+		if ("zoom".equals(evt.getPropertyName()))
         {
             actionZoom(evt.getNewValue());
         }
         else
         {
-        	if (evt.getNewValue() != null)
+			try
 			{
 				actionCombo(evt.getNewValue());
+			}
+			finally
+			{
+				infoPanel = null;
+				m_searchWindowOpen = false;
+				m_settingValue = false;
 			}
         }
 

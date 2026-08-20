@@ -17,6 +17,7 @@
 package org.adempiere.webui.apps.form;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.webui.LayoutUtils;
@@ -116,13 +117,14 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 		bDelete.setImage("images/StepForward16.png");
 		bDeleteAll.setImage("images/FastForward16.png");
 		
-		form.setWidth("99%");
+		form.setWidth("100%");
 		form.setHeight("100%");
-		form.setStyle("position: absolute; padding: 0; margin: 0");
-		form.appendChild (mainLayout);
+		form.setStyle("padding: 0; margin: 0;");
+		form.appendChild(mainLayout);
+
 		mainLayout.setWidth("100%");
 		mainLayout.setHeight("100%");
-		mainLayout.setStyle("position: absolute");
+		mainLayout.setStyle("margin: 0; padding: 0;");
 		
 		treeLabel.setText (Msg.translate(Env.getCtx(), "AD_Tree_ID"));
 		cbAllNodes.setEnabled (false);
@@ -207,10 +209,10 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 			
 		else if (e.getTarget() == bDelete)
 		{
-			SimpleListModel model = (SimpleListModel) centerList.getModel();
-			int i = centerList.getSelectedIndex();
-			if (i >= 0) {
-				action_treeDelete((ListItem)model.getElementAt(i));
+			ListItem item = getSelectedTreeListItem();
+
+			if (item != null) {
+				action_treeDelete(item);
 			}
 		}			
 		else if (e.getTarget() == bDeleteAll)
@@ -308,88 +310,157 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 	}	//	valueChanged
 	
 	/**
-	 * 	Tree selection
-	 *	@param e event
+	 * Tree selection
+	 * @param e event
 	 */
-	private void onTreeSelection (Event e)
+	private void onTreeSelection(Event e)
 	{
-		Treeitem ti = centerTree.getSelectedItem();
-		DefaultTreeNode stn = (DefaultTreeNode) ti.getValue();
-		MTreeNode tn = (MTreeNode)stn.getData();
-		if (tn == null)
+		Treeitem treeItem = centerTree.getSelectedItem();
+
+		if (treeItem == null) {
+			centerList.clearSelection();
+			bDelete.setEnabled(false);
 			return;
-		log.info(tn.toString());
-		ListModel model = centerList.getModel();
-		int size = model.getSize();
-		int index = -1;
-		for (index = 0; index < size; index++)
-		{
-			ListItem item = (ListItem)model.getElementAt(index);
-			if (item.id == tn.getNode_ID())
-				break;
 		}
-		centerList.setSelectedIndex(index);
+
+		Object value = treeItem.getValue();
+
+		if (!(value instanceof DefaultTreeNode)) {
+			centerList.clearSelection();
+			bDelete.setEnabled(false);
+			return;
+		}
+
+		DefaultTreeNode treeNode = (DefaultTreeNode) value;
+		Object data = treeNode.getData();
+
+		if (!(data instanceof MTreeNode)) {
+			centerList.clearSelection();
+			bDelete.setEnabled(false);
+			return;
+		}
+
+		MTreeNode node = (MTreeNode) data;
+		log.info(node.toString());
+
+		ListModel model = centerList.getModel();
+		int selectedIndex = -1;
+
+		for (int index = 0; index < model.getSize(); index++)
+		{
+			ListItem item = (ListItem) model.getElementAt(index);
+
+			if (item.id == node.getNode_ID())
+			{
+				selectedIndex = index;
+				break;
+			}
+		}
+
+		if (selectedIndex >= 0)
+		{
+			centerList.setSelectedIndex(selectedIndex);
+			bDelete.setEnabled(!m_tree.isAllNodes());
+		}
+		else
+		{
+			/*
+			 * El nodo raíz no pertenece a centerList y no se puede eliminar.
+			 * Nunca debe ejecutarse setSelectedIndex(model.getSize()).
+			 */
+			centerList.clearSelection();
+			bDelete.setEnabled(false);
+		}
 	}	//	propertyChange
 
 	/**
 	 * 	Action: Add Node to Tree
 	 * 	@param item item
 	 */
+	/**
+	 * Action: Add Node to Tree
+	 * @param item item
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void action_treeAdd(ListItem item)
 	{
-	    log.info("Item=" + item);
+		log.info("Item=" + item);
 
-	    if (item != null)
-	    {
-	        SimpleTreeModel model = getSimpleTreeModel();
-	        if (model == null) {
-	            return;
-	        }
+		if (item == null) {
+			return;
+		}
 
-	        DefaultTreeNode stn = model.find(model.getRoot(), item.id);
+		SimpleTreeModel model = getSimpleTreeModel();
+		if (model == null) {
+			return;
+		}
 
-	        if (stn != null) {
-	            MTreeNode tNode = (MTreeNode) stn.getData();
-	            tNode.setName(item.name);
-	            tNode.setAllowsChildren(item.isSummary);
-	            tNode.setImageIndicator(item.imageIndicator);
-	            model.nodeUpdated(stn);
+		DefaultTreeNode stn = model.find(model.getRoot(), item.id);
 
-	            Treeitem ti = centerTree.renderItemByPath(model.getPath(stn));
-	            ti.setTooltiptext(item.description);
-	        } else {
-	            stn = new DefaultTreeNode(new MTreeNode(item.id, 0, item.name, item.description, 0, item.isSummary,
-	                    item.imageIndicator, false, null));
-	            model.addNode(stn);
-	        }
+		if (stn != null)
+		{
+			MTreeNode tNode = (MTreeNode) stn.getData();
+			tNode.setName(item.name);
+			tNode.setAllowsChildren(item.isSummary);
+			tNode.setImageIndicator(item.imageIndicator);
 
-	        addNode(item);
-	    }
+			model.nodeUpdated(stn);
+
+			Treeitem ti = centerTree.renderItemByPath(model.getPath(stn));
+			if (ti != null) {
+				ti.setTooltiptext(item.description);
+			}
+		}
+		else
+		{
+			stn = new DefaultTreeNode(
+				new MTreeNode(
+					item.id,
+					0,
+					item.name,
+					item.description,
+					0,
+					item.isSummary,
+					item.imageIndicator,
+					false,
+					null
+				)
+			);
+
+			/*
+			 * DefaultTreeNode.add() ya agrega el nodo y notifica al TreeModel.
+			 * No utilizar model.addNode(stn), porque genera una segunda
+			 * notificación visual en ZK 10.
+			 */
+			DefaultTreeNode root = (DefaultTreeNode) model.getRoot();
+			root.add(stn);
+		}
+
+		// Persistir una sola vez en la tabla de nodos del árbol.
+		addNode(item);
 	}	//	action_treeAdd
 	
 	/**
-	 * 	Action: Delete Node from Tree
-	 * 	@param item item
+	 * Action: Delete Node from Tree
+	 * @param item item
 	 */
 	private void action_treeDelete(ListItem item)
 	{
-	    log.info("Item=" + item);
+		log.info("Item=" + item);
 
-	    if (item != null)
-	    {
-	        SimpleTreeModel model = getSimpleTreeModel();
-	        if (model == null) {
-	            return;
-	        }
+		if (item == null) {
+			return;
+		}
 
-	        DefaultTreeNode stn = model.find(model.getRoot(), item.id);
+		/*
+		 * Primero elimina el registro persistido y después reconstruye
+		 * el árbol desde la base de datos. Así se evita desincronizar
+		 * el modelo visual de ZK 10.
+		 */
+		deleteNode(item);
+		action_loadTree();
 
-	        if (stn != null) {
-	            model.removeNode(stn);
-	        }
-
-	        deleteNode(item);
-	    }
+		LayoutUtils.sendDeferLayoutEvent(mainLayout, 100);
 	}	//	action_treeDelete
 
 	
@@ -410,23 +481,40 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 	}	//	action_treeAddAll
 	
 	/**
-	 * 	Action: Delete All Nodes from Tree
+	 * Action: Delete All Nodes from Tree
 	 */
 	private void action_treeDeleteAll()
 	{
 		log.info("");
-		//TODO: translation
-		if (FDialog.ask(m_WindowNo, null, "Remove all item(s) from tree?")) {
-			ListModel model = centerList.getModel();
-			int size = model.getSize();
-			int index = -1;
-			for (index = 0; index < size; index++)
-			{
-				ListItem item = (ListItem)model.getElementAt(index);
-				action_treeDelete(item);
-			}
+
+		if (!FDialog.ask(
+				m_WindowNo,
+				null,
+				"Remove all item(s) from tree?"))
+		{
+			return;
 		}
-	}	//	action_treeDeleteAll
+
+		ListModel model = centerList.getModel();
+		int size = model.getSize();
+
+		/*
+		 * Se guarda una copia porque el modelo visual se reconstruye
+		 * solamente después de terminar todas las eliminaciones.
+		 */
+		List<ListItem> items = new ArrayList<ListItem>();
+
+		for (int index = 0; index < size; index++) {
+			items.add((ListItem) model.getElementAt(index));
+		}
+
+		for (ListItem item : items) {
+			deleteNode(item);
+		}
+
+		action_loadTree();
+		LayoutUtils.sendDeferLayoutEvent(mainLayout, 100);
+	}//	action_treeDeleteAll
 	
 	public ADForm getForm() 
 	{
@@ -445,5 +533,46 @@ public class WTreeMaintenance extends TreeMaintenance implements IFormController
 
 	    return null;
 	}
+	
+	/**
+	 * Obtiene el ListItem correspondiente al nodo seleccionado.
+	 *
+	 * @return elemento seleccionado o null
+	 */
+	private ListItem getSelectedTreeListItem()
+	{
+		Treeitem treeItem = centerTree.getSelectedItem();
+
+		if (treeItem == null) {
+			return null;
+		}
+
+		Object value = treeItem.getValue();
+
+		if (!(value instanceof DefaultTreeNode)) {
+			return null;
+		}
+
+		Object data = ((DefaultTreeNode) value).getData();
+
+		if (!(data instanceof MTreeNode)) {
+			return null;
+		}
+
+		int nodeId = ((MTreeNode) data).getNode_ID();
+		ListModel model = centerList.getModel();
+
+		for (int index = 0; index < model.getSize(); index++)
+		{
+			ListItem item = (ListItem) model.getElementAt(index);
+
+			if (item.id == nodeId) {
+				return item;
+			}
+		}
+
+		return null;
+	}
+	
 
 }	//	VTreeMaintenance

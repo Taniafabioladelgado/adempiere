@@ -149,7 +149,11 @@ public class GridPanel extends Borderlayout implements EventListener
 	public GridPanel(int windowNo)
 	{
 		this.windowNo = windowNo;
+		setHflex("1");
+		setVflex("1");
 		listbox = new Grid();
+		listbox.setHflex("1");
+		listbox.setVflex("1");
 		
 		listbox.addEventListener(Events.ON_FOCUS, this);
 		listbox.setOddRowSclass(null);
@@ -157,6 +161,8 @@ public class GridPanel extends Borderlayout implements EventListener
 		this.appendChild(south);
 
 		center = new Center();
+		center.setHflex("1");
+		center.setVflex("1");
 		center.appendChild(listbox);
 		this.appendChild(center);
 	}
@@ -364,6 +370,7 @@ public class GridPanel extends Borderlayout implements EventListener
 	{
 		LayoutUtils.addSclass("adtab-grid-panel", this);
 
+		listbox.setHflex("1");
 		listbox.setVflex(true);
 		//listbox.setFixedLayout(true);
 		listbox.addEventListener(Events.ON_CLICK, this);
@@ -1014,6 +1021,7 @@ public class GridPanel extends Borderlayout implements EventListener
 	protected void createListbox()
 	{
 		listbox = new Grid();
+		listbox.setHflex("1");
 		listbox.setOddRowSclass(null);
 		listbox.setVflex(true);
 	} // createListbox

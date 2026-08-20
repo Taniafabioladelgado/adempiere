@@ -292,9 +292,9 @@ public class WAcctViewer extends Window implements EventListener
 			setTitle(Msg.getMsg(Env.getCtx(), "InfoAccount"));
 			setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
 			setBorder("none");
-			setWidth("100%");
-			setHeight("100%");
-			setStyle("position: absolute");
+			setHflex("1");
+			setVflex("1");
+			setStyle("margin:0; padding:0;");
 		}
 
 		
@@ -643,11 +643,23 @@ public class WAcctViewer extends Window implements EventListener
 		bRePost.setLabel(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "RePost")));
 		bRePost.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "RePostInfo")));
 		bRePost.addEventListener(Events.ON_CLICK, this);
-		bRePost.setVisible(false);
+		//bRePost.setVisible(false);
 
 		forcePost.setLabel(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Force")));
 		forcePost.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "ForceInfo")));
 		forcePost.setVisible(false);
+
+		String normalStyle =
+		        "width: 36px; height: 30px; min-width: 36px; padding: 0; "
+		      + "background: #1976bd; background-image: none; "
+		      + "border: 1px solid #1565a8; border-radius: 3px; "
+		      + "cursor: pointer;";
+
+		String hoverStyle =
+		        "width: 36px; height: 30px; min-width: 36px; padding: 0; "
+		      + "background: #125a91; background-image: none; "
+		      + "border: 1px solid #0d4775; border-radius: 3px; "
+		      + "cursor: pointer;";
 
 		bQuery.setImage("/images/Refresh16.png");
 		bQuery.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Refresh")));
@@ -665,15 +677,48 @@ public class WAcctViewer extends Window implements EventListener
 		bPrint.setImage("/images/Print16.png");
 		bPrint.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Print")));
 		bPrint.addEventListener(Events.ON_CLICK, this);
+
+		// Aplicar fondo azul normal
+		bRePost.setStyle(normalStyle);
+		bQuery.setStyle(normalStyle);
+		bZoom.setStyle(normalStyle);
+		bExport.setStyle(normalStyle);
+		bPrint.setStyle(normalStyle);
+
+		// Oscurecer al pasar el mouse
+		Button[] actionButtons = {
+		        bQuery,
+		        bZoom,
+		        bExport,
+		        bPrint
+		};
+
+		for (final Button button : actionButtons) {
+
+		    button.addEventListener(Events.ON_MOUSE_OVER, new EventListener() {
+		        @Override
+		        public void onEvent(Event event) {
+		            button.setStyle(hoverStyle);
+		        }
+		    });
+
+		    button.addEventListener(Events.ON_MOUSE_OUT, new EventListener() {
+		        @Override
+		        public void onEvent(Event event) {
+		            button.setStyle(normalStyle);
+		        }
+		    });
+		}
 		
 		southPanel.setWidth("100%");
-		bRePost.setWidth("2%");
+		//bRePost.setWidth("2%");
 		forcePost.setWidth("12%");
 		statusLine.setWidth("78%");
-		bZoom.setWidth("2%");
-		bExport.setWidth("2%");
-		bPrint.setWidth("2%");
-		bQuery.setWidth("2%");
+		
+		//bZoom.setWidth("2%");
+		//bExport.setWidth("2%");
+		//bPrint.setWidth("2%");
+		//bQuery.setWidth("2%");
 		southPanel.appendChild(bRePost);
 		southPanel.appendChild(forcePost);
 		southPanel.appendChild(statusLine);
@@ -685,19 +730,19 @@ public class WAcctViewer extends Window implements EventListener
 		// Result Tab
 
 		resultPanel = new Borderlayout();
-		resultPanel.setStyle("position: absolute");
-		resultPanel.setWidth("99%");
-		resultPanel.setHeight("99%");
+		resultPanel.setHflex("1");
+		resultPanel.setVflex("1");
+		resultPanel.setStyle("margin:0; padding:0;");
 		result.appendChild(resultPanel);
 
 		Center resultCenter = new Center();
 		resultCenter.setHflex("1");
 		resultCenter.setVflex("1");
 		resultPanel.appendChild(resultCenter);
-		table.setWidth("96%");
-		table.setHeight("98%");
+		table.setHflex("1");
+		//table.setHeight("98%");
 		table.setVflex(true);
-		table.setStyle("overflow: auto; position: absolute;");
+		table.setStyle("overflow: auto;");
 		resultCenter.appendChild(table);
 
 		pagingPanel = new South();
@@ -752,8 +797,8 @@ public class WAcctViewer extends Window implements EventListener
 
 		South south = new South();
 		south.setParent(layout);
-		south.setSize("40px");
-		south.setStyle("background-color: transparent");
+		south.setSize("50px");
+		//south.setStyle("background-color: transparent");
 		southPanel.setParent(south);
 
 		//tabbedPane.addEventListener(Events.ON_SELECT, this);

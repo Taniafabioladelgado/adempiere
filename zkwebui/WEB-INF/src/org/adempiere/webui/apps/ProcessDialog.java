@@ -63,7 +63,9 @@ public class ProcessDialog extends Window implements IZKProcessDialog {
 		processInfo = new WProcessInfo(null, processId);
 		Env.setContext(Env.getCtx(), windowNo, "IsSOTrx", isSOTrx ? "Y" : "N");
 		try {
-			setStyle("position: absolute; width: 100%; height: 100%");
+			setHflex("1");
+			setVflex("1");
+			setStyle("margin:0; padding:0;");
 			init();
 		} catch(Exception ex) {
 			log.log(Level.SEVERE, "", ex);

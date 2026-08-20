@@ -370,13 +370,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	 */
 	protected void setSizes()
 	{
-		//  TODO this can be removed if Zk is upgraded to 5+.  Use vflex=min for all layout areas except 
-		//  the p_centerCenter which should fill the remaining space.
-		// Have to set the criteriaGrid height specifically.  58 is the height of the reset button and label.
-		// p_criteriaGrid is assumed to hold a Rows component that is non null and has children.
-		int rowHeight = (30*((Rows) p_criteriaGrid.getFirstChild()).getChildren().size());
-		rowHeight = rowHeight > 58 ? rowHeight : 58;
-		p_northLayout.setHeight(rowHeight + "px");
+		p_northLayout.setVflex("min");
+		p_northLayout.setHeight(null);
 		p_southLayout.setHeight("70px");
 		
 		if (p_centerNorth.getChildren().size() == 0)
@@ -390,8 +385,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		
 		if (p_centerSouth.getChildren().size() > 0)
 		{
-			int detailHeight = (p_height * 25 / 100);
-			p_centerSouth.setHeight(detailHeight + "px");
+			p_centerSouth.setVflex("min");
+			p_centerSouth.setHeight(null);
 		}
 		else
 		{
@@ -406,7 +401,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		{
 			setAttribute(Window.MODE_KEY, Window.MODE_MODAL);
 			setBorder("normal");
-			setClosable(true);
+			// El cierre del encabezado evita el flujo Cancelar del ConfirmPanel.
+			// La búsqueda modal debe cerrarse únicamente con su botón inferior.
+			setClosable(false);
 			setWidth(p_width + "px");
 			setHeight(p_height + "px");
     		setContentStyle("overflow: auto");
@@ -417,9 +414,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		{
 			setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
 			setBorder("none");
-			setWidth("100%");
-			setHeight("100%");
-			setStyle("position: absolute");
+			setHflex("1");
+			setVflex("1");
+			setStyle("margin:0; padding:0;");
 		}
 		
         confirmPanel = new ConfirmPanel(true, true, false, true, true, true);  // Elaine 2008/12/16
@@ -456,12 +453,10 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         p_table.setAttribute("zk_component_ID", "Lookup_Data_SearchResults");        
         p_table.setVflex(true);
         
-        p_centerLayout.setWidth("100%");
+        p_centerLayout.setHflex("1");
+        p_centerLayout.setVflex("1");
         //p_centerLayout.setHeight("100%");
-        if (isModal())
-        	p_centerLayout.setStyle("border: none; position: relative");
-        else
-        	p_centerLayout.setStyle("border: none; position: absolute");
+        p_centerLayout.setStyle("border: none;");
 
 		p_centerLayout.appendChild(p_centerNorth);  // May be empty
 		p_centerLayout.appendChild(p_centerCenter); // the table
@@ -482,8 +477,11 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		//  Setup the north reset button and criteria grid
 		West spWest = new West();
 		spWest.setBorder("0");
+		spWest.setWidth("50px");
+
 		Center spCenter = new Center();
 		spCenter.setBorder("0");
+		spCenter.setHflex("1");
 
 		p_northLayout.setWidth("");
 		p_northLayout.appendChild(spWest);
@@ -504,8 +502,17 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		spCenter.appendChild(p_criteriaGrid);
 
         Borderlayout mainPanel = new Borderlayout();
-        mainPanel.setWidth("100%");
-        mainPanel.setHeight("100%");
+        if (isModal())
+        {
+            mainPanel.setWidth("100%");
+            mainPanel.setHeight("100%");
+        }
+        else
+        {
+        	mainPanel.setHflex("1");
+        	mainPanel.setVflex("1");
+        	mainPanel.setStyle("margin:0; padding:0;");
+        }
         //
         North north = new North();
         mainPanel.appendChild(north);
@@ -530,10 +537,6 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 
         mainPanel.appendChild(mainSouth);
         //
-        if (!isModal())
-        {
-        	mainPanel.setStyle("position: absolute");
-        }
 		this.appendChild(mainPanel);
         this.addEventListener(Events.ON_OK, this);
         this.setVisible(true);
@@ -1009,6 +1012,39 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         p_table.addEventListener(Events.ON_DOUBLE_CLICK, this);
         doubleClickListenerAdded = true;
     }
+
+    private boolean isTableDoubleClick(Event event)
+    {
+        if (!Events.ON_DOUBLE_CLICK.equals(event.getName()))
+            return false;
+
+        if (event.getTarget() == p_table)
+            return true;
+
+        Listitem item = findListitem(event.getTarget());
+        if (item == null && event.getData() instanceof Component)
+            item = findListitem((Component)event.getData());
+
+        return item != null && item.getListbox() == p_table;
+    }
+
+    private void selectDoubleClickRow(Event event)
+    {
+        Listitem item = findListitem(event.getTarget());
+        if (item == null && event.getData() instanceof Component)
+            item = findListitem((Component)event.getData());
+
+        if (item != null && item.getListbox() == p_table)
+            p_table.setSelectedItem(item);
+    }
+
+    private Listitem findListitem(Component component)
+    {
+        while (component != null && !(component instanceof Listitem))
+            component = component.getParent();
+
+        return (Listitem)component;
+    }
     
     protected void insertPagingComponent() {
     	p_centerNorth.appendChild(paging);
@@ -1286,7 +1322,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	{
 		// Don't trap single "%".  These can be used to find
 		// all non-null values.
-		if (s.length() > 0)
+		if (s != null && s.length() > 0)
 			return true;
 		return false;
 	}   //  isValidSQLText
@@ -1581,8 +1617,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		                onOk();
     			
 	            }
-	            else if (component == p_table && event.getName().equals(Events.ON_DOUBLE_CLICK))
+	            else if (isTableDoubleClick(event))
 	            {
+	            	selectDoubleClickRow(event);
 	            	onDoubleClick();
 	            }
 				else if (component.equals(confirmPanel.getButton(ConfirmPanel.A_RESET)))
@@ -1609,6 +1646,16 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	            else if (component.equals(confirmPanel.getButton(ConfirmPanel.A_CANCEL)) || event.getName().equals(Events.ON_CANCEL))
 	            {
 	            	m_cancel = true;
+	            	if (listeners != null && listeners.size() > 0)
+	            	{
+	            		ValueChangeEvent cancelEvent = new ValueChangeEvent(
+	            			this,
+	            			p_keyColumn,
+	            			null,
+	            			null
+	            		);
+	            		fireValueChange(cancelEvent);
+	            	}
 	                dispose(false);  // close
 	            }
 	            // Elaine 2008/12/16
@@ -1774,7 +1821,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	{
 		if (isModal())
 		{
-			dispose(p_saveResults);
+			onOk();
 		}
 		else
 		{

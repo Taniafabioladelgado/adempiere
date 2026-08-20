@@ -237,20 +237,35 @@ public class WLocatorDialog extends Window implements EventListener
 
 	    Hbox boxButtons = new Hbox();
 	    boxButtons.setWidth("100%");
-	    boxButtons.setStyle("text-align: right;");
-
-	    Label spacer = new Label();
-	    spacer.setWidth("80%");
-	    btnCancel.setWidth("10%");
-	    btnOk.setWidth("10%");
+	    boxButtons.setPack("end");
+	    boxButtons.setSpacing("4px");
+	    boxButtons.setStyle(
+	            "padding: 6px;" +
+	            "box-sizing: border-box;"
+	    );
 
 	    btnCancel.setImage("/images/Cancel16.png");
+	    btnCancel.setWidth("34px");
+	    btnCancel.setHeight("30px");
+	    btnCancel.setTooltiptext(Msg.getMsg(Env.getCtx(), "Cancel"));
+	    btnCancel.setStyle(
+	            "padding: 5px;" +
+	            "min-width: 34px;" +
+	            "box-sizing: border-box;"
+	    );
 	    btnCancel.addEventListener(Events.ON_CLICK, this);
 
 	    btnOk.setImage("/images/Ok16.png");
+	    btnOk.setWidth("34px");
+	    btnOk.setHeight("30px");
+	    btnOk.setTooltiptext(Msg.getMsg(Env.getCtx(), "OK"));
+	    btnOk.setStyle(
+	            "padding: 5px;" +
+	            "min-width: 34px;" +
+	            "box-sizing: border-box;"
+	    );
 	    btnOk.addEventListener(Events.ON_CLICK, this);
 
-	    boxButtons.appendChild(spacer);
 	    boxButtons.appendChild(btnCancel);
 	    boxButtons.appendChild(btnOk);
 

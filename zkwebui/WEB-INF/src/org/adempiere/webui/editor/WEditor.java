@@ -222,7 +222,7 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
     {
         label = new Label("");
         label.setValue(strLabel);
-        label.setTooltiptext(description);
+//        label.setTooltiptext(description);
 
         this.setMandatory (mandatory);
         if (readOnly || !updateable)
@@ -234,12 +234,23 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
             this.setReadWrite(true);
         }
 
-        ((HtmlBasedComponent)component).setTooltiptext(description);
+//        ((HtmlBasedComponent)component).setTooltiptext(description);
+//        
+//        if(gridField!=null)
+//        	label.setTooltiptext(description + "\n\n" + gridField.getHelp());
+//        else
+//        	label.setTooltiptext(description);
         
-        if(gridField!=null)
-        	label.setTooltiptext(description + "\n\n" + gridField.getHelp());
+        String safeDescription = safeText(description);
+        String safeHelp = gridField != null ? safeText(gridField.getHelp()) : "";
+
+        label.setTooltiptext(safeDescription);
+        ((HtmlBasedComponent) component).setTooltiptext(safeDescription);
+
+        if (gridField != null && safeHelp.length() > 0)
+            label.setTooltiptext(safeDescription + "\n\n" + safeHelp);
         else
-        	label.setTooltiptext(description);
+            label.setTooltiptext(safeDescription);
 
         //init listeners
         for (String event : this.getEvents())
@@ -249,18 +260,28 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
         component.addEventListener(Events.ON_FOCUS, new EventListener() {
 			public void onEvent(Event event) throws Exception {
 				hasFocus = true;
-				if(gridTab!=null)
-				{
-					CWindowToolbar toolbar = tabPanel.getGlobalToolbar();
-					
-					if(toolbar!=null)
-					{	
-						if (tabPanel.getGlobalToolbar().getCurrentPanel() != toolbar.getCurrentPanel())
-						{	
-							tabPanel.getGlobalToolbar().getCurrentPanel().setUnselected(toolbar.getCurrentPanel());
-							tabPanel.getGlobalToolbar().getCurrentPanel().setSelected(tabPanel);
-						}
-					}
+//				if(gridTab!=null)
+//				{
+//					CWindowToolbar toolbar = tabPanel.getGlobalToolbar();
+//					
+//					if(toolbar!=null)
+//					{	
+//						if (tabPanel.getGlobalToolbar().getCurrentPanel() != toolbar.getCurrentPanel())
+//						{	
+//							tabPanel.getGlobalToolbar().getCurrentPanel().setUnselected(toolbar.getCurrentPanel());
+//							tabPanel.getGlobalToolbar().getCurrentPanel().setSelected(tabPanel);
+//						}
+//					}
+//				}
+				if (gridTab != null && tabPanel != null) {
+				    CWindowToolbar toolbar = tabPanel.getGlobalToolbar();
+
+				    if (toolbar != null && toolbar.getCurrentPanel() != null) {
+				        if (tabPanel.getGlobalToolbar().getCurrentPanel() != toolbar.getCurrentPanel()) {
+				            tabPanel.getGlobalToolbar().getCurrentPanel().setUnselected(toolbar.getCurrentPanel());
+				            tabPanel.getGlobalToolbar().getCurrentPanel().setSelected(tabPanel);
+				        }
+				    }
 				}
 			}
 
@@ -307,6 +328,10 @@ public abstract class WEditor implements CEditor, EventListener, PropertyChangeL
         });
         
         repaintComponent();
+    }
+    
+    private String safeText(String value) {
+        return value == null ? "" : value;
     }
 
     /**

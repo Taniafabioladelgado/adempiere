@@ -104,8 +104,12 @@ public class WFPanel extends Borderlayout implements EventListener
 	 */
 	private void jbInit() throws Exception
 	{
-		this.setStyle("height: 100%; width: 100%; position: absolute");
+		this.setHflex("1");
+		this.setVflex("1");
+		this.setStyle("margin:0; padding:0;");
 		Center center = new Center();
+		center.setHflex("1");
+		center.setVflex("1");
 		this.appendChild(center);
 		center.appendChild(contentPanel);
 		contentPanel.setStyle("width: 100%; heigh: 100%;");

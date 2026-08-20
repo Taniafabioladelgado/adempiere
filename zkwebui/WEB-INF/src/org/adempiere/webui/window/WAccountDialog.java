@@ -226,7 +226,7 @@ public final class WAccountDialog extends Window
 		{
 			layout.setHeight("93%");
 			layout.setWidth("98%");
-			layout.setStyle("background-color: transparent; position: absolute;");
+			layout.setStyle("background-color: transparent;");
 			this.setStyle("position: relative;");
 		}
 		else

@@ -34,6 +34,7 @@ import org.zkoss.util.media.Media;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.North;
@@ -50,7 +51,7 @@ import org.zkoss.zul.Separator;
  *  @author Low Heng Sin 
  *  
  */
-public class WImageDialog extends Window implements EventListener
+public class WImageDialog extends Window implements EventListener<Event>
 {
 	/**
 	 * 
@@ -106,6 +107,7 @@ public class WImageDialog extends Window implements EventListener
 	private Image image = new Image();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true,false,true,false,false,false);
 	private boolean cancel = false;
+	private EventListener<Event> saveListener;
 
 	/**
 	 *  Static Init
@@ -167,6 +169,8 @@ public class WImageDialog extends Window implements EventListener
 				m_mImage.deleteEx(true);
 				m_mImage = null;
 			}
+			if (saveListener != null)
+				saveListener.onEvent(new Event(Events.ON_CLOSE, this));
 			detach();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
@@ -187,17 +191,48 @@ public class WImageDialog extends Window implements EventListener
 	public boolean isCancel() {
 		return cancel;
 	}
+
+	/**
+	 * Sets the listener notified after the image changes have been persisted.
+	 * This is needed because modal windows are asynchronous when ZK event
+	 * threads are disabled.
+	 *
+	 * @param listener listener to notify after confirming the dialog
+	 */
+	public void setSaveListener(EventListener<Event> listener) {
+		saveListener = listener;
+	}
 	
 	/**
 	 *  Load file & display
 	 */
 	private void cmd_file()
 	{
-		//  Show File Open Dialog
-		Media imageFile = null;
-		
-		imageFile = Fileupload.get(); 
-			
+		/*
+		 * Fileupload.get() only returns the uploaded media when ZK event threads
+		 * are enabled.  They are disabled in the web client, so the old code
+		 * always received null after the upload dialog closed.  Use the upload
+		 * callback instead, which is invoked in both event-thread modes.
+		 */
+		Media[] medias = Fileupload.get(new EventListener<UploadEvent>() {
+			@Override
+			public void onEvent(UploadEvent event) throws Exception {
+				loadImage(event.getMedia());
+			}
+		});
+
+		// Retain compatibility with installations that use event threads.
+		if (medias != null && medias.length > 0)
+			loadImage(medias[0]);
+	}   //  cmd_file
+
+	/**
+	 * Load an uploaded image into the preview and its persistent model.
+	 *
+	 * @param imageFile uploaded image media
+	 */
+	private void loadImage(Media imageFile)
+	{
 		if (imageFile == null)
 			return;
 
@@ -232,7 +267,7 @@ public class WImageDialog extends Window implements EventListener
 			m_mImage.setBinaryData(image.getContent().getByteData());
 		else
 			m_mImage.setBinaryData(null);
-	}   //  cmd_file
+	}   //  loadImage
 
 	/**
 	 * 	Get Image ID

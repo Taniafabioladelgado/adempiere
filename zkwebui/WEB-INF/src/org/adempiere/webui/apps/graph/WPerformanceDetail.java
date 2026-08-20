@@ -32,8 +32,12 @@ public class WPerformanceDetail extends Window
 		appendChild(barPanel);
 				
 		this.setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
-		this.setStyle("height: 100%; width: 100%; position: absolute; overflow: auto");
-		barPanel.setStyle("height: 100%; width: 100%; position: absolute; overflow: visible");
+		this.setHflex("1");
+		this.setVflex("1");
+		this.setStyle("overflow: auto");
+		barPanel.setHflex("1");
+		barPanel.setVflex("1");
+		barPanel.setStyle("overflow: visible");
 		SessionManager.getAppDesktop().showWindow(this);
 	}	//	PerformanceDetail
 }

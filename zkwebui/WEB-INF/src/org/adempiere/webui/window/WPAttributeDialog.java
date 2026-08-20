@@ -92,6 +92,11 @@ public class WPAttributeDialog extends Window implements EventListener
 	 */
 	private static final long serialVersionUID = -7810825026970615029L;
 
+	public interface AttributeCallback
+	{
+		void onClose(WPAttributeDialog dialog);
+	}
+
 	/**
 	 *	Product Attribute Instance Dialog
 	 *	@param M_AttributeSetInstance_ID Product Attribute Set Instance id
@@ -199,6 +204,7 @@ public class WPAttributeDialog extends Window implements EventListener
 	private String m_columnName = null;
 	private MProduct m_product;
 	private boolean m_productASI;
+	private AttributeCallback m_attributeCallback;
 
 	/**
 	 *	Layout
@@ -542,15 +548,28 @@ public class WPAttributeDialog extends Window implements EventListener
 			String.valueOf(m_M_Locator_ID));
 		//
 		this.detach();
+		fireAttributeCallback();
 	}	//	dispose
+
+	public void setAttributeCallback(AttributeCallback attributeCallback)
+	{
+		m_attributeCallback = attributeCallback;
+	}
+
+	private void fireAttributeCallback()
+	{
+		AttributeCallback callback = m_attributeCallback;
+		m_attributeCallback = null;
+		if (callback != null)
+			callback.onClose(this);
+	}
 
 	public void onEvent(Event e) throws Exception 
 	{
 		//	Select Instance
 		if (e.getTarget() == bSelect)
 		{
-			if (cmd_select())
-				dispose();
+			cmd_select();
 		}
 		//	New/Edit
 		else if (e.getTarget() == cbNewEdit)
@@ -622,9 +641,8 @@ public class WPAttributeDialog extends Window implements EventListener
 
 	/**
 	 * 	Instance Selection Button
-	 * 	@return true if selected
 	 */
-	private boolean cmd_select()
+	private void cmd_select()
 	{
 		log.config("");
 		
@@ -673,10 +691,21 @@ public class WPAttributeDialog extends Window implements EventListener
 		//		
 		InfoPAttributeInstancePanel pai = new InfoPAttributeInstancePanel(this, title, 
 			M_Warehouse_ID, M_Locator_ID, m_M_Product_ID, m_C_BPartner_ID);
-		//
+		pai.setSelectionCallback(new InfoPAttributeInstancePanel.SelectionCallback() {
+			public void onClose(InfoPAttributeInstancePanel panel) {
+				if (!panel.wasCancelled() && applyAttributeInstanceSelection(panel))
+					dispose();
+			}
+		});
+	}	//	cmd_select
+
+	private boolean applyAttributeInstanceSelection(InfoPAttributeInstancePanel pai)
+	{
+		boolean changed = false;
 		if (m_M_AttributeSetInstance_ID != pai.getM_AttributeSetInstance_ID() ||
 				!(m_M_AttributeSetInstance_ID == 0 && pai.getM_AttributeSetInstance_ID() == -1))
 		{
+			changed = true;
 			m_changed = true;
 			//
 			if (pai.getM_AttributeSetInstance_ID() != -1)
@@ -692,8 +721,8 @@ public class WPAttributeDialog extends Window implements EventListener
 				// Leave the locator alone
 			}
 		}
-		return m_changed;
-	}	//	cmd_select
+		return changed;
+	}	//	applyAttributeInstanceSelection
 
 	/**
 	 * 	Instance New/Edit

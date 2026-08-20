@@ -186,8 +186,12 @@ public class WGraph extends Div implements IdSpace {
 		if (m_renderTable && m_renderChart) {
 			layout = new Borderlayout();
 			appendChild(layout);
-			layout.setStyle("height: 100%; width: 100%; position: absolute;");
+			layout.setHflex("1");
+			layout.setVflex("1");
+			layout.setStyle("margin:0; padding:0;");
 			Center center = new Center();
+			center.setHflex("1");
+			center.setVflex("1");
 			layout.appendChild(center);
 			center.appendChild(panel);
 		} else {			

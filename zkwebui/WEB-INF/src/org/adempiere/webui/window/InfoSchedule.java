@@ -95,7 +95,7 @@ public class InfoSchedule extends Window implements EventListener
 //		this.setHeight("600px");
 		this.setClosable(true);
 		this.setBorder("normal");
-		this.setStyle("position: absolute");
+		this.setStyle("margin:0; padding:0;");
 		if (mAssignment == null)
 			m_mAssignment = new MResourceAssignment(Env.getCtx(), 0, null);
 		else

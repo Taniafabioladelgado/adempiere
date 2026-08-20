@@ -230,6 +230,12 @@ public class RolePanel extends Window implements EventListener, Deferrable
         pnlButtons.setWidth(null);
         pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
         pnlButtons.getButton(ConfirmPanel.A_CANCEL).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+        pnlButtons.getButton(ConfirmPanel.A_OK).setImage("images/Ok16.png");
+        pnlButtons.getButton(ConfirmPanel.A_CANCEL).setImage("images/Cancel16.png");
+        pnlButtons.getButton(ConfirmPanel.A_OK).setTooltiptext(ConfirmPanel.A_OK);
+        pnlButtons.getButton(ConfirmPanel.A_CANCEL).setTooltiptext(ConfirmPanel.A_CANCEL);
+        pnlButtons.getButton(ConfirmPanel.A_OK).setStyle("min-width:72px; height:32px;");
+        pnlButtons.getButton(ConfirmPanel.A_CANCEL).setStyle("min-width:72px; height:32px;");
         div.appendChild(pnlButtons);
         this.appendChild(div);
     }

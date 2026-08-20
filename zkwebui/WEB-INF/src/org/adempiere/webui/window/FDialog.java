@@ -50,29 +50,36 @@ public class FDialog
     }
 
     /**
-     * Construct a message from the AD_Message and the additional message replacing carriage
-     * returns with html line breaks
+     * Construye el mensaje traducido y agrega el mensaje adicional
+     * utilizando saltos de línea compatibles con ZK 10.
      *
-     * @param adMessage	AD_Message string
-     * @param message	additional message
-     * @return The translated AD_Message appended with the additional message
+     * @param adMessage mensaje registrado en AD_Message
+     * @param message mensaje adicional
+     * @return mensaje completo con saltos de línea
      */
-    private static String constructMessage(String adMessage, String message)
-	{
-		StringBuffer out = new StringBuffer();
+    private static String constructMessage(
+            String adMessage,
+            String message) {
 
-		if (adMessage != null && !adMessage.equals(""))
-		{
-			out.append(Msg.getMsg(Env.getCtx(), adMessage));
-		}
+        StringBuilder out = new StringBuilder();
 
-		if (message != null && message.length() > 0)
-		{
-			out.append("<br><br>").append(message);
-		}
+        if (adMessage != null && !adMessage.trim().isEmpty()) {
+            out.append(Msg.getMsg(Env.getCtx(), adMessage));
+        }
 
-		return out.toString().replace("\n", "<br>");
-	}
+        if (message != null && !message.trim().isEmpty()) {
+
+            if (out.length() > 0) {
+                out.append("\n\n");
+            }
+
+            out.append(message);
+        }
+
+        return out.toString()
+                .replace("\r\n", "\n")
+                .replace('\r', '\n');
+    }
 
 	/**
 	 *	Display warning with warning icon

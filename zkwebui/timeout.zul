@@ -15,6 +15,10 @@
                 <timer delay="1000" id="pooltimer" repeats="true">
                     <attribute name="onTimer"><![CDATA[
                         ibx.setValue(ibx.getValue() + 1);
+                        if (ibx.getValue().intValue() >= 20)
+                        {
+                            Executions.getCurrent().sendRedirect("/index.zul");
+                        }
                     ]]></attribute>
                 </timer>
             </div>

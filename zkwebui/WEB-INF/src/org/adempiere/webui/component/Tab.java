@@ -25,6 +25,8 @@ package org.adempiere.webui.component;
  */
 public class Tab extends org.zkoss.zul.Tab
 {
+	public static final String AFTER_CLOSE_ATTRIBUTE = "desktop.tab.afterClose";
+
     /**
 	 * 
 	 */
@@ -43,7 +45,16 @@ public class Tab extends org.zkoss.zul.Tab
 	@Override
 	public void onClose() {
 		Tabpanel tp = (Tabpanel) getLinkedPanel();
+		if (tp == null) {
+			return;
+		}
 		tp.onClose();
+		if (getParent() == null && tp.getParent() == null) {
+			Object afterClose = getAttribute(AFTER_CLOSE_ATTRIBUTE);
+			if (afterClose instanceof Runnable) {
+				((Runnable) afterClose).run();
+			}
+		}
 	}
 
 }

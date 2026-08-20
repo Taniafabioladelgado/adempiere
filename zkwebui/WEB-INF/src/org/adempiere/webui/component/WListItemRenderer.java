@@ -945,12 +945,15 @@ public class WListItemRenderer implements ListitemRenderer, EventListener, Listi
 
 		public void onEvent(Event event) throws Exception {
 			if (listBox != null && Events.ON_DOUBLE_CLICK.equals(event.getName())) {
-				Event evt = new Event(Events.ON_DOUBLE_CLICK, listBox);
+				Component target = event.getTarget();
+				while (target != null && !(target instanceof Listitem))
+					target = target.getParent();
+
+				Event evt = new Event(Events.ON_DOUBLE_CLICK, listBox, target);
 				Events.sendEvent(listBox, evt);
 			}
 		}
 
 	}
 }
-
 

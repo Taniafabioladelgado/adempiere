@@ -116,6 +116,8 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		super (windowNo, modal, "C_BPartner", "C_BPartner_ID", multipleSelection, saveResults, whereClause);
 		log.info(value + ", WHERE=" + whereClause);
 		setTitle(Msg.getMsg(Env.getCtx(), "InfoBPartner"));
+		// El cierre inferior conserva el ciclo de selección del WSearchEditor.
+		if (modal) setClosable(false);
 		m_isSOTrx = isSOTrx;
 		m_isSOMatch = isSOMatch;
 		//

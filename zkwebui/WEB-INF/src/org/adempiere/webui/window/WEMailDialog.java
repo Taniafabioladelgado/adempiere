@@ -98,7 +98,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		this.setHeight("500px");
 		this.setClosable(true);
 		this.setBorder("normal");
-        this.setStyle("position:absolute");
+        this.setStyle("margin:0; padding:0;");
 		        
 		commonInit(from, to, subject, message, attachment);				
 	}	//	EmailDialog
@@ -194,7 +194,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 				
 		Grid grid = new Grid();
 		grid.setWidth("480px");
-        grid.setStyle("margin:0; padding:0; position: absolute; align: center; valign: center;");
+        grid.setStyle("margin:0; padding:0; align: center; valign: center;");
         grid.makeNoStrip();
         grid.setOddRowSclass("even");
         
@@ -270,7 +270,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		rows.appendChild(row);
 		row.appendChild(createCell(fMessage, 2));
 		fMessage.setWidth("100%");
-		fMessage.setHeight("100%");
+		//fMessage.setHeight("100%");
 		fMessage.setRows(10);
 		
 		row = new Row();
@@ -282,7 +282,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		Borderlayout layout = new Borderlayout();
 		layout.setWidth("490px");
 		layout.setHeight("470px");
-		layout.setStyle("background-color: white; position: absolute;");
+		layout.setStyle("background-color: white;");
 		
 		Center center = new Center();
 		center.appendChild(grid);

@@ -118,15 +118,19 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
         pnlSide.getMenuPanel().addMenuListener(this);
 
         layout = new Borderlayout();
+        layout.setStyle("margin:0; padding:0;");
         if (parent != null)
         {
         	layout.setParent(parent);
-        	layout.setWidth("100%");
-        	layout.setHeight("100%");
-        	layout.setStyle("position: absolute");
+        	layout.setHflex("1");
+        	layout.setVflex("1");
         }
         else
+        {
         	layout.setPage(page);
+        	layout.setWidth("100%");
+        	layout.setHeight("100%");
+        }
 
 		dashboardRunnable = new DashboardRunnable(layout.getDesktop(), this);
 
@@ -138,9 +142,14 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 
         leftRegion = new West();
         layout.appendChild(leftRegion);
-        leftRegion.setWidth("300px");
+        leftRegion.setSize("300px");
+        leftRegion.setMinsize(240);
+        leftRegion.setMaxsize(560);
         leftRegion.setCollapsible(true);
         leftRegion.setSplittable(true);
+        leftRegion.setSlidable(false);
+        leftRegion.setSclass("desktop-main-menu");
+        leftRegion.setStyle("border-right:2px solid #7f9cab;");
         leftRegion.setTitle("Navigation");
 
         leftRegion.addEventListener(Events.ON_OPEN, new EventListener() {			
@@ -153,8 +162,9 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 			}
 		});
         UserPreference pref = SessionManager.getUserPreference();
-        boolean menuCollapsed= pref.isPropertyBool(UserPreference.P_MENU_COLLAPSED);
-        leftRegion.setOpen(!menuCollapsed);
+        pref.setProperty(UserPreference.P_MENU_COLLAPSED, true);
+        pref.savePreference();
+        leftRegion.setOpen(false);
         navigationPanel = new Accordion();
         navigationPanel.setParent(leftRegion);
 
@@ -188,6 +198,8 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 
         windowArea = new Center();
         windowArea.setParent(layout);
+        windowArea.setHflex("1");
+        windowArea.setVflex("1");
 
         windowContainer.createPart(windowArea);
 
@@ -466,8 +478,8 @@ public class NavBarDesktop extends TabbedDesktop implements MenuListener, Serial
 
 	    West west = layout.getWest();
 
-	    if (west.isCollapsible() && !west.isOpen()) {
-	        west.setOpen(true);
+	    if (west.isCollapsible() && west.isOpen()) {
+	        west.setOpen(false);
 	        west.invalidate();
 	    }
 	}

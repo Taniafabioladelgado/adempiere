@@ -134,8 +134,6 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 	
 	private void initComponents() {
 		getComponent().setButtonImage("images/PAttribute10.png");
-		getComponent().addEventListener(Events.ON_CLICK, this);
-		getComponent().addEventListener(Events.ON_CHANGE, this);
 
 		this.partnerId = Env.getContextAsInt(Env.getCtx(), this.windowNo, "C_BPartner_ID");
 
@@ -324,14 +322,12 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 				WPAttributeDialog vad = new WPAttributeDialog (
 					attributeSetInstanceId, productId, this.partnerId,
 					productWindow, gridFieldAttribute.getAD_Column_ID(), this.windowNo);
-				if (vad.isChanged())
-				{
-					getComponent().setText(vad.getM_AttributeSetInstanceName());
-					attributeSetInstanceId = vad.getM_AttributeSetInstance_ID();
-					if (this.gridTabAttribute != null && !productWindow && vad.getM_Locator_ID() > 0)
-						this.gridTabAttribute.setValue("M_Locator_ID", vad.getM_Locator_ID());
-					changed = true;
-				}
+				vad.setAttributeCallback(new WPAttributeDialog.AttributeCallback() {
+					public void onClose(WPAttributeDialog dialog) {
+						applyAttributeDialogSelection(dialog, oldValueInt, productWindow);
+					}
+				});
+				return;
 			}
 		}
 
@@ -366,6 +362,43 @@ public class WPAttributeEditor extends WEditor implements ContextMenuListener
 			}
 		}	//	change
 	}   //  cmd_file
+
+	private void applyAttributeDialogSelection(WPAttributeDialog dialog, int oldValueInt, boolean productWindow)
+	{
+		if (!dialog.isChanged())
+			return;
+
+		getComponent().setText(dialog.getM_AttributeSetInstanceName());
+		int attributeSetInstanceId = dialog.getM_AttributeSetInstance_ID();
+		int locatorId = dialog.getM_Locator_ID();
+
+		log.finest("Changed M_AttributeSetInstance_ID=" + attributeSetInstanceId);
+		this.value = new Object();				//	force re-query display
+		if (attributeSetInstanceId == 0)
+			setValue(null);
+		else
+			setValue(Integer.valueOf(attributeSetInstanceId));
+
+		if (this.gridTabAttribute != null && !productWindow && locatorId > 0)
+		{
+			log.finest("Change M_Locator_ID="+locatorId);
+			this.gridTabAttribute.setValue("M_Locator_ID", locatorId);
+		}
+
+		String columnName = "M_AttributeSetInstance_ID";
+ 	 	if (this.gridFieldAttribute != null)
+ 	 	{
+ 	 		columnName = this.gridFieldAttribute.getColumnName();
+ 	 	}
+		ValueChangeEvent vce = new ValueChangeEvent(this, columnName, new Object(), getValue());
+		fireValueChange(vce);
+
+		if (attributeSetInstanceId == oldValueInt && this.gridTabAttribute != null && this.gridFieldAttribute != null)
+		{
+			//  force Change - user does not realize that embedded object is already saved.
+			this.gridTabAttribute.processFieldChange(super.gridField);
+		}
+	}
 
 	public String[] getEvents()
     {

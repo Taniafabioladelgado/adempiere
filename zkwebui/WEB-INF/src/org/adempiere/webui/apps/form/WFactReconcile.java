@@ -343,9 +343,9 @@ public class WFactReconcile extends CustomForm
 	{
 	    setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
 	    setBorder("none");
-	    setWidth("100%");
-	    setHeight("100%");
-	    setStyle("position: absolute");
+	    setHflex("1");
+	    setVflex("1");
+	    setStyle("margin:0; padding:0;");
 
 	    miniTable.setAttribute("zk_component_ID", "Lookup_Data_SearchResults");
 	    miniTable.setVflex(true);

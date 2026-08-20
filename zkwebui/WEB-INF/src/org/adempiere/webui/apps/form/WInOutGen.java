@@ -16,9 +16,9 @@ package org.adempiere.webui.apps.form;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import org.adempiere.webui.LayoutUtils;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.Listbox;
-import org.adempiere.webui.component.ListboxFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
@@ -37,10 +37,13 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.HtmlBasedComponent;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
-import org.zkoss.zul.Space;
+import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Div;
 
 /**
  * Generate Shipment (manual) view class
@@ -52,13 +55,19 @@ public class WInOutGen extends InOutGen implements IFormController, EventListene
 	
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(WInOutGen.class);
+	private static final String CRITERIA_GRID_SCLASS = "inoutgen-criteria-grid";
+	private static final String CRITERIA_CONTAINER_SCLASS = "inoutgen-criteria";
+	private static final String CRITERIA_FIELD_SCLASS = "inoutgen-criteria-field";
+	private static final String CRITERIA_LABEL_SCLASS = "inoutgen-criteria-label";
+	private static final String CRITERIA_EDITOR_SCLASS = "inoutgen-criteria-editor";
+	private static final String CRITERIA_NORTH_SCLASS = "inoutgen-criteria-north";
 	//
 	private Label lWarehouse = new Label();
 	private WTableDirEditor fWarehouse;
 	private Label lBPartner = new Label();
 	private WSearchEditor fBPartner;
 	private Label     lDocType = new Label();
-	private Listbox  cmbDocType = ListboxFactory.newDropdownListbox();
+	private Combobox cmbDocType = new Combobox();
 	private Label   lDocAction = new Label();
 	private WTableDirEditor docAction;
 	
@@ -98,23 +107,36 @@ public class WInOutGen extends InOutGen implements IFormController, EventListene
 	{
 		lBPartner.setText(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 		
+		form.getParameterPanel().setSclass(CRITERIA_GRID_SCLASS);
+		form.getParameterPanel().setWidth("100%");
+		addSclass(form.getParameterPanel().getParent(), CRITERIA_NORTH_SCLASS);
 		Row row = form.getParameterPanel().newRows().newRow();
-		row.appendChild(lWarehouse.rightAlign());
-		row.appendChild(fWarehouse.getComponent());
-		row.appendChild(new Space());
-		row.appendChild(lBPartner.rightAlign());
-		row.appendChild(fBPartner.getComponent());
-		row.appendChild(new Space());
-		
-		row = new Row();
-		form.getParameterPanel().getRows().appendChild(row);
-		row.appendChild(lDocType.rightAlign());
-		row.appendChild(cmbDocType);
-		row.appendChild(new Space());
-		row.appendChild(lDocAction.rightAlign());
-		row.appendChild(docAction.getComponent());
-		row.appendChild(new Space());
+		Div criteria = new Div();
+		criteria.setSclass(CRITERIA_CONTAINER_SCLASS);
+		row.appendChild(criteria);
+
+		addCriteriaField(criteria, lWarehouse.rightAlign(), fWarehouse.getComponent());
+		addCriteriaField(criteria, lBPartner.rightAlign(), fBPartner.getComponent());
+		addCriteriaField(criteria, lDocType.rightAlign(), cmbDocType);
+		addCriteriaField(criteria, lDocAction.rightAlign(), docAction.getComponent());
 	}	//	jbInit
+
+	private void addCriteriaField(Div criteria, Component label, Component editor)
+	{
+		Div field = new Div();
+		field.setSclass(CRITERIA_FIELD_SCLASS);
+		addSclass(label, CRITERIA_LABEL_SCLASS);
+		addSclass(editor, CRITERIA_EDITOR_SCLASS);
+		field.appendChild(label);
+		field.appendChild(editor);
+		criteria.appendChild(field);
+	}
+
+	private void addSclass(Component component, String sclass)
+	{
+		if (component instanceof HtmlBasedComponent)
+			LayoutUtils.addSclass(sclass, (HtmlBasedComponent)component);
+	}
 
 	/**
 	 *	Fill Picks.
@@ -145,20 +167,30 @@ public class WInOutGen extends InOutGen implements IFormController, EventListene
 		fBPartner.addValueChangeListener(this);
 		//Document Type Sales Order/Vendor RMA
 		lDocType.setText(Msg.translate(Env.getCtx(), "C_DocType_ID"));
-		cmbDocType.addItem(new KeyNamePair(MOrder.Table_ID, Msg.translate(Env.getCtx(), "Order")));
-		cmbDocType.addItem(new KeyNamePair(MRMA.Table_ID, Msg.translate(Env.getCtx(), "VendorRMA")));
-		cmbDocType.addActionListener(this);
+		cmbDocType.appendItem(Msg.translate(Env.getCtx(), "Order"), new KeyNamePair(MOrder.Table_ID, Msg.translate(Env.getCtx(), "Order")));
+		cmbDocType.appendItem(Msg.translate(Env.getCtx(), "VendorRMA"), new KeyNamePair(MRMA.Table_ID, Msg.translate(Env.getCtx(), "VendorRMA")));
+		cmbDocType.setReadonly(true);
+		cmbDocType.addEventListener(Events.ON_SELECT, this);
 		cmbDocType.setSelectedIndex(0);
+		configureResponsiveFields();
 		
 		form.getStatusBar().setStatusLine(Msg.getMsg(Env.getCtx(), "InOutGenerateSel"));//@@
 	}	//	fillPicks
+
+	private void configureResponsiveFields()
+	{
+		fWarehouse.getComponent().setWidth("100%");
+		fBPartner.getComponent().setWidth("100%");
+		cmbDocType.setWidth("100%");
+		docAction.getComponent().setWidth("100%");
+	}
     
 	/**
 	 *  Query Info
 	 */
 	public void executeQuery()
 	{
-		KeyNamePair docTypeKNPair = cmbDocType.getSelectedItem().toKeyNamePair();
+		KeyNamePair docTypeKNPair = (KeyNamePair)cmbDocType.getSelectedItem().getValue();
 		executeQuery(docTypeKNPair, form.getMiniTable());
 		form.getMiniTable().repaint();
 		form.invalidate();
@@ -226,7 +258,7 @@ public class WInOutGen extends InOutGen implements IFormController, EventListene
 	 */
 	public String generate()
 	{
-		KeyNamePair docTypeKNPair = (KeyNamePair)cmbDocType.getSelectedItem().toKeyNamePair();
+		KeyNamePair docTypeKNPair = (KeyNamePair)cmbDocType.getSelectedItem().getValue();
 		String docActionSelected = (String)docAction.getValue();	
 		return generate(form.getStatusBar(), docTypeKNPair, docActionSelected);
 	}	//	generateShipments

@@ -24,6 +24,7 @@ import org.adempiere.webui.component.TokenCommand;
 import org.adempiere.webui.component.ZoomCommand;
 import org.adempiere.webui.desktop.DefaultDesktop;
 import org.adempiere.webui.desktop.IDesktop;
+import org.adempiere.webui.desktop.TabbedDesktop;
 import org.adempiere.webui.event.TokenEvent;
 import org.adempiere.webui.session.ServerContext;
 import org.adempiere.webui.session.SessionContextListener;
@@ -243,6 +244,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 			ExecutionCarryOver executionCarryOver = new ExecutionCarryOver(desktop);
 			SessionManager.setApplicationDesktop(httpSession.getId(), applicationDesktop);
 			SessionManager.setExecutionCarryOverCache(httpSession.getId(), executionCarryOver);
+			restoreSavedDesktopTabs();
 
 			if (loginDesktop != null)
 			{
@@ -352,6 +354,12 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 			applicationDesktop = new DefaultDesktop();
 	}
 
+	private void restoreSavedDesktopTabs()
+	{
+		if (applicationDesktop instanceof TabbedDesktop)
+			((TabbedDesktop) applicationDesktop).restoreSavedTabs();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.adempiere.webui.IWebClient#logout()
 	 */
@@ -368,6 +376,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		Env.setCtx(context);
 		Env.setContext(Env.getCtx(), SessionContextListener.SERVLET_SESSION_ID, httpSession.getId());
 		langSession = Env.getContext(Env.getCtx(), Env.LANGUAGE);
+		TabbedDesktop.clearSavedTabs(httpSession);
 		SessionManager.clearSession(httpSession.getId());
 		SessionManager.removeExecutionCarryOver(httpSession.getId());
 		SessionManager.removeDestop(httpSession.getId());
@@ -420,6 +429,7 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		langSession = Env.getContext(Env.getCtx(), Env.LANGUAGE);
 		Env.getCtx().clear();
 		Env.setCtx(context);
+		TabbedDesktop.clearSavedTabs(httpSession);
 		SessionManager.cleanSessionBackground(httpSession.getId());
 		Executions.sendRedirect("index.zul");
 	}

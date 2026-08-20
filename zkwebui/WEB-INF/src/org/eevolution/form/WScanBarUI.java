@@ -167,9 +167,12 @@ public class WScanBarUI extends ScanBar implements IFormController, EventListene
         return;
     }
 
-    private void zkInit()
+	private void zkInit()
 	{
 		Borderlayout contentPane = new Borderlayout();
+		contentPane.setHflex("1");
+		contentPane.setVflex("1");
+		contentPane.setStyle("margin:0; padding:0;");
 		form.appendChild(contentPane);
 
 		North north = new North();
@@ -198,9 +201,9 @@ public class WScanBarUI extends ScanBar implements IFormController, EventListene
     private void productPanel()
     {
     	Borderlayout borderlayout = new Borderlayout();
-    	borderlayout.setStyle("position: absolute");
-    	borderlayout.setWidth("100%");
-    	borderlayout.setHeight("100%");
+    	borderlayout.setHflex("1");
+    	borderlayout.setVflex("1");
+    	borderlayout.setStyle("margin:0; padding:0;");
     	productPanel.appendChild(borderlayout);
 
 		North north = new North();
@@ -213,6 +216,8 @@ public class WScanBarUI extends ScanBar implements IFormController, EventListene
 		Center center = new Center();
 		center.setBorder("none");
 		//center.setFlex(true);
+		center.setHflex("1");
+		center.setVflex("1");
 		center.setAutoscroll(true);
 		borderlayout.appendChild(center);
 		center.appendChild(productTable);
@@ -712,5 +717,3 @@ public class WScanBarUI extends ScanBar implements IFormController, EventListene
 	}
 
 }
-
-

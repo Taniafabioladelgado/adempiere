@@ -93,6 +93,8 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 	private Div portalLayout;
 	private DashboardRunnable dashboardRunnable;
 
+	private static final String HEADER_HEIGHT = "50px";
+
 	private int noOfNotice;
 
 	private int noOfRequest;
@@ -134,29 +136,42 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         pnlSide.getMenuPanel().addMenuListener(this);
 
         layout = new Borderlayout();
+        layout.setStyle("margin:0; padding:0;");
         if (parent != null)
         {
         	layout.setParent(parent);
-        	layout.setWidth("100%");
-        	layout.setHeight("100%");
-        	layout.setStyle("position: absolute");
+        	layout.setHflex("1");
+        	layout.setVflex("1");
         }
         else
+        {
         	layout.setPage(page);
+        	layout.setWidth("100%");
+        	layout.setHeight("100%");
+        }
 
         dashboardRunnable = createDashboardRunnable();
 
         North n = new North();
-        n.setSplittable(true);
+        n.setHeight(HEADER_HEIGHT);
+        n.setSplittable(false);
         n.setCollapsible(false);
+        n.setBorder("none");
+        n.setStyle("height:" + HEADER_HEIGHT + "; min-height:" + HEADER_HEIGHT + "; overflow:visible; padding:0; margin:0;");
         layout.appendChild(n);
+
         pnlHead.setParent(n);
 
         West w = new West();
         layout.appendChild(w);
-        w.setWidth("300px");
+        w.setSize("300px");
+        w.setMinsize(240);
+        w.setMaxsize(560);
         w.setCollapsible(true);
         w.setSplittable(true);
+        w.setSlidable(false);
+        w.setSclass("desktop-main-menu");
+        w.setStyle("border-right:2px solid #7f9cab;");
         w.setTitle(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Menu")));
 
         w.addEventListener(Events.ON_OPEN, new EventListener() {			
@@ -169,12 +184,15 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 			}
 		});
         UserPreference pref = getUserPreference();
-        boolean menuCollapsed= pref.isPropertyBool(UserPreference.P_MENU_COLLAPSED);
-        w.setOpen(!menuCollapsed);
+        pref.setProperty(UserPreference.P_MENU_COLLAPSED, true);
+        pref.savePreference();
+        w.setOpen(false);
         pnlSide.setParent(w);
 
         windowArea = new Center();
         windowArea.setParent(layout);
+        windowArea.setHflex("1");
+        windowArea.setVflex("1");
 
 
         windowContainer.createPart(windowArea);
@@ -191,11 +209,12 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 		//portalLayout = createPortalLayout();
 		//portalLayout.setWidth("100%");
 		//portalLayout.setHeight("100%");
-		//portalLayout.setStyle("position: absolute; overflow: auto");
+		//portalLayout.setStyle("legacy full-size layout; overflow: auto");
 		//homeTab.appendChild(portalLayout);
 		// Nuevo layout usando Div con flexbox
 		portalLayout = new Div();
-		portalLayout.setStyle("display: flex; flex-wrap: nowrap; width: 100%; height: 100%; overflow: auto; gap: 10px;");
+		portalLayout.setSclass("desktop-home-dashboard");
+		portalLayout.setStyle("display:flex; flex-wrap:wrap; width:100%; height:100%; overflow-x:hidden; overflow-y:auto; gap:6px; padding:4px; box-sizing:border-box; align-content:flex-start;");
 		homeTab.appendChild(portalLayout);
 		// Dashboard content
 		//Portalchildren portalChildren = null;
@@ -212,6 +231,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 				size = proportion.split(",");
 
 			noOfColumns = getSessionColumnCount();
+			portalLayout.setSclass("desktop-home-dashboard desktop-home-dashboard-cols-" + Math.max(1, noOfColumns));
 			width = noOfColumns <= 0 ? 100 : 100 / noOfColumns;
 			Div currentColumn = null;
 			for (final MDashboardContent dashboardContent : getDashboardContent()) {
@@ -226,7 +246,8 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 					if (size != null && size.length > 0 && size.length > counter && !Util.isEmpty(size[counter], true))
 						columnWidth = size[counter];
 					currentColumn = new Div();
-					currentColumn.setStyle("flex: 0 0 " + columnWidth.trim() + "%; padding: 5px; box-sizing: border-box;");
+					currentColumn.setSclass("desktop-home-column dashboard-column-" + counter);
+					currentColumn.setStyle("flex:1 1 calc(" + columnWidth.trim() + "% - 6px); min-width:0; max-width:100%; padding:0; margin:0; box-sizing:border-box; overflow:visible;");
 					portalLayout.appendChild(currentColumn);
 					currentColumnNo = columnNo;
 					counter++;
@@ -234,7 +255,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 
 
 				Panel panel = new Panel();
-				panel.setStyle("margin-bottom:10px");
+				panel.setStyle("margin:0 0 6px 0; min-width:0; box-sizing:border-box;");
 				panel.setTitle(dashboardContent.get_Translation(MDashboardContent.COLUMNNAME_Name));
 
 				String description = dashboardContent.get_Translation(MDashboardContent.COLUMNNAME_Description);
@@ -246,6 +267,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 				panel.setBorder("normal");
 				currentColumn.appendChild(panel);
 				Panelchildren content = new Panelchildren();
+				content.setStyle("padding:0; margin:0; overflow:auto; box-sizing:border-box;");
 				panel.appendChild(content);
 				boolean panelEmpty = true;
 
@@ -507,8 +529,8 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 
 	    West west = layout.getWest();
 
-	    if (west.isCollapsible() && !west.isOpen()) {
-	        west.setOpen(true);
+	    if (west.isCollapsible() && west.isOpen()) {
+	        west.setOpen(false);
 	        west.invalidate();
 	    }
 	}

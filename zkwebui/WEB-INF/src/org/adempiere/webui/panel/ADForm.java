@@ -79,7 +79,7 @@ public abstract class ADForm extends Window implements EventListener
 
          this.setWidth("100%");
          this.setHeight("100%");
-         this.setStyle("position:absolute");
+         this.setStyle("margin:0; padding:0;");
          this.setContentSclass("adform-content");
     }
 

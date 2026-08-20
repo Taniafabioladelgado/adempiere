@@ -155,20 +155,19 @@ public class WImageEditor extends WEditor
 	{
 		if (Events.ON_CLICK.equals(event.getName()) && readwrite)
 		{
-			WImageDialog vid = new WImageDialog(m_mImage);
-			if (!vid.isCancel()) {
-				int AD_Image_ID = vid.getAD_Image_ID();
-				Object oldValue = getValue();
-				Integer newValue = null;
-				if (AD_Image_ID != 0)
-					newValue = Integer.valueOf(AD_Image_ID);
-				//
-				m_mImage = null;	//	force reload
-				setValue(newValue);	//	set explicitly
-				//
-				ValueChangeEvent vce = new ValueChangeEvent(this, gridField.getColumnName(), oldValue, newValue);
-				fireValueChange(vce);
-			}
+			final Object oldValue = getValue();
+			final WImageDialog vid = new WImageDialog(m_mImage);
+			vid.setSaveListener(new org.zkoss.zk.ui.event.EventListener<Event>() {
+				@Override
+				public void onEvent(Event event) throws Exception {
+					int imageId = vid.getAD_Image_ID();
+					Integer newValue = imageId != 0 ? Integer.valueOf(imageId) : null;
+					m_mImage = null;	// force reload
+					setValue(newValue);
+					fireValueChange(new ValueChangeEvent(WImageEditor.this,
+							gridField.getColumnName(), oldValue, newValue));
+				}
+			});
 		}
 	}
 }

@@ -281,10 +281,29 @@ public class WLocationDialog extends Window implements EventListener
 
 		btnOk = new Button();
 		btnOk.setImage("/images/Ok16.png");
-		btnOk.addEventListener(Events.ON_CLICK,this);
+		btnOk.setWidth("34px");
+		btnOk.setHeight("30px");
+		btnOk.setTooltiptext(Msg.getMsg(Env.getCtx(), "OK"));
+		btnOk.setStyle(
+		        "padding: 5px;" +
+		        "margin-left: 4px;" +
+		        "min-width: 34px;" +
+		        "box-sizing: border-box;"
+		);
+		btnOk.addEventListener(Events.ON_CLICK, this);
+
 		btnCancel = new Button();
 		btnCancel.setImage("/images/Cancel16.png");
-		btnCancel.addEventListener(Events.ON_CLICK,this);
+		btnCancel.setWidth("34px");
+		btnCancel.setHeight("30px");
+		btnCancel.setTooltiptext(Msg.getMsg(Env.getCtx(), "Cancel"));
+		btnCancel.setStyle(
+		        "padding: 5px;" +
+		        "margin-left: 4px;" +
+		        "min-width: 34px;" +
+		        "box-sizing: border-box;"
+		);
+		btnCancel.addEventListener(Events.ON_CLICK, this);
 
 		toLink = new Button(TO_LINK);
 		toLink.setImage("/images/Online10.png");
@@ -358,11 +377,16 @@ public class WLocationDialog extends Window implements EventListener
 		pnlLinks.setWidth("100%");
 		pnlLinks.setStyle("text-align:left");
 
-		Panel pnlButton   = new Panel();
+		Panel pnlButton = new Panel();
+		pnlButton.setWidth("100%");
+		pnlButton.setStyle(
+		        "text-align: right;" +
+		        "padding: 6px;" +
+		        "box-sizing: border-box;"
+		);
+
 		pnlButton.appendChild(btnOk);
 		pnlButton.appendChild(btnCancel);
-		pnlButton.setWidth("100%");
-		pnlButton.setStyle("text-align:right");
 
 		this.appendChild(mainPanel);
 		if (MLocation.LOCATION_MAPS_URL_PREFIX != null || MLocation.LOCATION_MAPS_ROUTE_PREFIX != null)

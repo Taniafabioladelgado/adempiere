@@ -155,7 +155,11 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 	private Button bOK = null;
 	private Button bCancel = null;
 	private IZKProcessDialog parent = null;
-	private BusyDialog progressWindow;
+	//private BusyDialog progressWindow;
+	/**
+	 * Indica si está visible la capa de procesamiento nativa de ZK.
+	 */
+	private boolean processingBusy;
 	//saved paramaters
 
 	private Combobox fSavedName=new Combobox();
@@ -498,47 +502,59 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 
 	@Override
 	public void lockUI(ProcessInfo pi) {
-		if (isLocked) {
-			return;
-		}
-		//	Validate Parent
-		if(parent.getParentProcess() != null) {
-			parent.getParentProcess().lockUI(pi);
-		}
+
+	    if (isLocked) {
+	        return;
+	    }
+
+	    isLocked = true;
+
+	    if (parent != null && parent.getParentProcess() != null) {
+	        parent.getParentProcess().lockUI(pi);
+	    }
 	}
 
 	@Override
 	public void unlockUI(ProcessInfo pi) {
-		isLocked = false;
-		if(parent.getParentProcess() != null) {
-			hideBusyDialog();
-			if(parent.isEmbedded()) {
-				dispose();
-			}
-			parent.getParentProcess().unlockUI(pi);
-			return;
-		}
-		// avoid close dialog when an report is executed
-		if((isReport() && pi.isError()) || !isReport()) {
-			if(progressWindow != null) {
-				//move message div to center to give more space to display potentially very long log info
-				parameterPanel.detach();
-				centerPanel.removeChild(parameterPanel);
-				centerPanel.setStyle("overflow-y:auto");	
-				Html message = new Html(getLogInfo(false));
-				centerPanel.appendChild(message);
-				centerPanel.setAutoscroll(true);
-				parent.validateScreen();
-			}
-		}
-		//	
-		hideBusyDialog();
-		//	Show Result
-		openResult();
-		//	Hide
-		if(isReport() && !pi.isError()) {
-			dispose();
-		}
+
+	    isLocked = false;
+
+	    boolean wasProcessing = processingBusy;
+
+	    if (parent != null && parent.getParentProcess() != null) {
+
+	        if (parent.isEmbedded()) {
+	            dispose();
+	        }
+
+	        parent.getParentProcess().unlockUI(pi);
+	        return;
+	    }
+
+	    if (((isReport() && pi.isError()) || !isReport())
+	            && wasProcessing) {
+
+	        if (parameterPanel != null
+	                && parameterPanel.getParent() != null) {
+	            parameterPanel.detach();
+	        }
+
+	        centerPanel.setStyle("overflow-y:auto");
+
+	        Html processMessage = new Html(getLogInfo(false));
+	        centerPanel.appendChild(processMessage);
+	        centerPanel.setAutoscroll(true);
+
+	        if (parent != null) {
+	            parent.validateScreen();
+	        }
+	    }
+
+	    openResult();
+
+	    if (isReport() && !pi.isError()) {
+	        dispose();
+	    }
 	}
 
 	@Override
@@ -661,51 +677,78 @@ public class ProcessPanel extends ProcessController implements SmallViewEditable
 		process(null);
 	}
 	
-	/**
-	 * Save Parameters and process it
-	 */
 	public void process(String saveName) {
-		if(saveOrUpdateParameters(saveName) == null) {
-			showBusyDialog();
-			Clients.response(new AuEcho((Component) parent.getParentContainer(), "runProcess", null));
-		}
+
+	    if (saveOrUpdateParameters(saveName) == null) {
+	        showBusyDialog();
+
+	        Clients.response(
+	            new AuEcho(
+	                (Component) parent.getParentContainer(),
+	                "runProcess",
+	                null
+	            )
+	        );
+	    }
 	}
 	
 	/**
-	 * Run it
+	 * Ejecuta el proceso y garantiza la eliminación de la capa
+	 * de procesamiento al finalizar.
 	 */
 	protected void runProcess() {
-		getProcessInfo().setPrintPreview(true);
-		
-		// #1926 ZK Exports migration XML files to different location 
-		// than what is selected in the dialogs. Fix is to let the process
-		// know what interface is being used so it can manage the export 
-		// process correctly.
-		getProcessInfo().setInterfaceType(ProcessInfo.INTERFACE_TYPE_ZK);
-		
-		ProcessCtl worker = new ProcessCtl(this, getWindowNo(), getProcessInfo(),null);
-		worker.run();
-		//	Run
+
+	    getProcessInfo().setPrintPreview(true);
+	    getProcessInfo().setInterfaceType(
+	        ProcessInfo.INTERFACE_TYPE_ZK
+	    );
+
+	    try {
+
+	        ProcessCtl worker = new ProcessCtl(
+	            this,
+	            getWindowNo(),
+	            getProcessInfo(),
+	            null
+	        );
+
+	        worker.run();
+
+	    } finally {
+
+	        /*
+	         * Debe ser la última respuesta enviada al navegador,
+	         * después de unlockUI() y openResult().
+	         */
+	        hideBusyDialog();
+	    }
 	}
 	
 	/**
-	 * Show busy Dialog
+	 * Muestra el indicador de procesamiento nativo de ZK.
 	 */
 	private void showBusyDialog() {
-		progressWindow = new BusyDialog();
-		progressWindow.setPage(((Window)parent.getParentContainer()).getPage());
-		progressWindow.doHighlighted();
+
+	    if (processingBusy) {
+	        return;
+	    }
+
+	    processingBusy = true;
+	    Clients.showBusy(Msg.getMsg(Env.getCtx(), "Processing"));
 	}
 	
 	/**
-	 * Hide busy Dialog
+	 * Elimina la capa de procesamiento nativa de ZK.
 	 */
 	private void hideBusyDialog() {
-		if (progressWindow != null) {
-			progressWindow.detach();
-			progressWindow.dispose();
-			progressWindow = null;
-		}
+
+	    processingBusy = false;
+
+	    /*
+	     * Se ejecuta aunque unlockUI() ya haya intentado limpiar
+	     * la capa. Clients.clearBusy() admite esta llamada repetida.
+	     */
+	    Clients.clearBusy();
 	}
 	
 	@Override

@@ -140,16 +140,16 @@ public class WButtonEditor extends WEditor
         }
     }
 
-     @Override
+    @Override
     public String getDisplay()
     {
-        return m_value.toString();
+        return m_value != null ? m_value.toString() : "";
     }
 
     @Override
     public Object getValue()
     {
-        return m_values;
+        return m_value;
     }
 
     @Override
@@ -178,7 +178,9 @@ public class WButtonEditor extends WEditor
         }
         else if (m_values != null)
         {
-            text = (String)m_values.get(value);
+            text = (String)m_values.get(value.toString());
+            if (text == null)
+                text = value.toString();
         }
         else if (m_lookup != null)
         {
@@ -221,10 +223,10 @@ public class WButtonEditor extends WEditor
         if (Env.isBaseLanguage(Env.getCtx(), "AD_Ref_List"))
             SQL = "SELECT Value, Name FROM AD_Ref_List WHERE AD_Reference_ID=?";
         else
-            SQL = "SELECT l.Value, t.Name FROM AD_Ref_List l, AD_Ref_List_Trl t "
-                + "WHERE l.AD_Ref_List_ID=t.AD_Ref_List_ID"
-                + " AND t.AD_Language='" + Env.getAD_Language(Env.getCtx()) + "'"
-                + " AND l.AD_Reference_ID=?";
+            SQL = "SELECT l.Value, COALESCE(t.Name, l.Name) FROM AD_Ref_List l "
+                + "LEFT JOIN AD_Ref_List_Trl t ON (l.AD_Ref_List_ID=t.AD_Ref_List_ID"
+                + " AND t.AD_Language='" + Env.getAD_Language(Env.getCtx()) + "')"
+                + " WHERE l.AD_Reference_ID=?";
 
         try
         {

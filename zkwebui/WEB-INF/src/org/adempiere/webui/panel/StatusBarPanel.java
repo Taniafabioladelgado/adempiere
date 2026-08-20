@@ -39,6 +39,7 @@ import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Vbox;
+import org.zkoss.zul.South;
 
 /**
  * This class is based on org.compiere.apps.StatusBar written by Jorg Janke.
@@ -85,6 +86,8 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
 	private Image image = new Image();
 
 	private North north;
+	
+	private South south;
 
 	public StatusBarPanel()
 	{
@@ -105,92 +108,48 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
     {
         statusDB = new Label("  ");
         statusLine = new Label();
-        
-        Hbox hbox = new Hbox();
-        hbox.setWidth("100%");
-        hbox.setHeight("100%");
+
+        Div row = new Div();
+        row.setWidth("100%");
+        row.setHeight("100%");
+        LayoutUtils.addSclass("statusbar-row", row);
 
         URI uri = AEnv.getImage("errormsg.png");
         image.setSrc(uri.toString());
         image.setVisible(false);
-
-        image.setWidth("5%");
-        hbox.appendChild(image);
+        image.setWidth("16px");
+        image.setHeight("16px");
+        LayoutUtils.addSclass("status-image", image);
+        row.appendChild(image);
 
         west = new Div();
-        west.setStyle("text-align: left; ");
-        LayoutUtils.addSclass("status-db", statusLine);
+        LayoutUtils.addSclass("status-left", west);
+        LayoutUtils.addSclass("status-line-container", west);
+
+        LayoutUtils.addSclass("status-line", statusLine);
         west.appendChild(statusLine);
-
-        Vbox vbox = new Vbox();
-        vbox.setPack("center");
-        LayoutUtils.addSclass("status", vbox);
-
-        if (embedded)
-            vbox.setWidth("80%");
-        else
-            vbox.setWidth("50%");
-
-        vbox.appendChild(west);
-        hbox.appendChild(vbox);
+        row.appendChild(west);
 
         east = new Div();
-        east.setWidth("100%");
-        east.setStyle("text-align: right; ");
+        LayoutUtils.addSclass("status-detail", east);
+        LayoutUtils.addSclass("status-detail-container", east);
 
         if (!embedded)
         {
             infoLine = new Label();
-            east.appendChild(infoLine);
             infoLine.setVisible(false);
-        }
-
-        east.appendChild(statusDB);
-
-        LayoutUtils.addSclass("status-db", statusDB);
-
-        if (!embedded)
             LayoutUtils.addSclass("status-info", infoLine);
-
-        vbox = new Vbox();
-        vbox.setPack("center");
-        LayoutUtils.addSclass("status", vbox);
-
-        if (embedded)
-            vbox.setWidth("10%");
-        else
-            vbox.setWidth("40%");
-
-        vbox.appendChild(east);
-        hbox.appendChild(vbox);
-
-        this.appendChild(hbox);
-
-        east = new Div();
-        east.setWidth("100%");
-        east.setStyle("text-align: right; ");
-        if (!embedded)
-        {
-        	infoLine = new Label();
-        	east.appendChild(infoLine);
-        	infoLine.setVisible(false);
+            east.appendChild(infoLine);
         }
-        east.appendChild(statusDB);
 
         LayoutUtils.addSclass("status-db", statusDB);
-        if (!embedded)
-        	LayoutUtils.addSclass("status-info", infoLine);
-        vbox = new Vbox();
-        vbox.setPack("center");
-        LayoutUtils.addSclass("status", vbox);
-        vbox.appendChild(east);
-        hbox.appendChild(vbox);
+        east.appendChild(statusDB);
 
-         this.appendChild(hbox);
+        row.appendChild(east);
+
+        this.appendChild(row);
 
         statusDB.addEventListener(Events.ON_CLICK, this);
-
-       // createPopup();
     }
 
     /**
@@ -244,62 +203,52 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
      * @param error
      * @param showPopup ignore for embedded
      */
-    public void setStatusLine (String text, boolean error, boolean showPopup)
+    public void setStatusLine(String text, boolean error, boolean showPopup)
     {
-    	statusLine.setText(text);
-    	
-    	if (error){
-    		this.setSclass("message-error");
-    		statusLine.setSclass("message-error-text");
-    		image.setVisible(true);
-    		this.setHeight("50px");
-    		if(north !=null)
-    		north.setHeight("83px");
-    	}
+        String value = text != null ? text : "";
+        statusLine.setText(value);
+        statusLine.setTooltiptext(value);
+
+        if (error)
+        {
+            setMessageSclass("message-error");
+            statusLine.setSclass("status-line message-error-text");
+            image.setVisible(true);
+
+            this.setHeight("50px");
+
+            if (south != null)
+                south.setHeight("50px");
+        }
+        else
+        {
+            setMessageSclass("message-info");
+            statusLine.setSclass("status-line message-info-text");
+            image.setVisible(false);
+
+            this.setHeight("22px");
+
+            if (south != null)
+                south.setHeight("22px");
+        }
+
+        this.invalidate();
+
+        if (south != null)
+            south.invalidate();
+    }
+    
+    public void setSouth(South s) {
+        this.south = s;
+    }
+
+    private void setMessageSclass(String messageClass)
+    {
+    	String currentSclass = getSclass();
+    	if (currentSclass != null && currentSclass.contains("adwindow-status"))
+    		setSclass("adwindow-status " + messageClass);
     	else
-    	{
-    		this.setSclass("message-info");
-    		statusLine.setSclass("message-info-text");
-    		image.setVisible(false);
-    		this.setHeight("25px");
-    		if(north !=null)
-    			north.setHeight("68px");
-    	}
-    	
-    	statusLine.setTooltiptext(text);
-
-    	/*
-    	if (showPopup && AEnv.isBrowserSupported())
-    	{
-	    	Text t = new Text(text);
-	    	popupContent.getChildren().clear();
-	    	popupContent.appendChild(t);
-	    	popupContent.setStyle(POPUP_TEXT_STYLE);
-	    	if (error)
-	    	{
-	    		popupStyle = POPUP_ERROR_BACKGROUND_STYLE;
-	    	}
-	    	else
-	    	{
-	    		popupStyle = POPUP_INFO_BACKGROUND_STYLE;
-	    	}
-
-
-	    	String shadow = SHADOW_STYLE;
-	    	popupStyle = popupStyle + shadow + POPUP_POSITION_STYLE;
-
-	    	showPopup();
-
-	    	//auto hide
-	    	String script = "setTimeout('$e(\"" + popup.getUuid() + "\").style.display = \"none\"',";
-	    	if (error)
-	    		script += "3500";
-	    	else
-	    		script += "1000";
-	    	script += ")";
-	    	AuScript aus = new AuScript(popup, script);
-	    	Clients.response("statusPopupFade", aus);
-    	}*/
+    		setSclass(messageClass);
     }
 
     /*
@@ -353,18 +302,16 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
 	 *	Set Info Line
 	 *  @param text text
 	 */
-	public void setInfo (String text)
-	{
-		if (!embedded)
-		{
-			infoLine.setValue(text != null ? text : "");
-			infoLine.setTooltiptext(text);
-			if (text == null || text.trim().length() == 0)
-				infoLine.setVisible(false);
-			else
-				infoLine.setVisible(true);
-		}
-	}	//	setInfo
+    public void setInfo(String text)
+    {
+        if (!embedded)
+        {
+            String value = text != null ? text.trim() : "";
+            infoLine.setValue(value);
+            infoLine.setTooltiptext(value);
+            infoLine.setVisible(value.length() > 0);
+        }
+    }	//	setInfo
 
 	public void onEvent(Event event) throws Exception {
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget() == statusDB)

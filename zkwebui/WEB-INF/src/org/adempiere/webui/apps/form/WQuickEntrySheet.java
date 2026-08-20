@@ -300,20 +300,24 @@ public class WQuickEntrySheet extends Window implements EventListener, DataStatu
 
 		if (gridTab.getCurrentRow() >= 0)
 		{
-		
-			boolean istrue = FDialog.ask(gridTab.getWindowNo(), null, "DeleteRecord?");
-			if (istrue)
-			{
-				gridTab.dataDelete();
-				gridTab.dataRefresh(true);
-//				gridPanel.setStatusLine(count + " Record(s) deleted.", false, true);
-			}
-		
-			// if all records is deleted then it will show default with new
-			// record.
-			if (gridTab.getRowCount() <= 0)
-				gridPanel.createNewLine();
-			gridPanel.updateListIndex();
+			FDialog.ask(gridTab.getWindowNo(), null, "DeleteRecord?", null, new FDialog.AskCallback() {
+				@Override
+				public void onAnswer(boolean ok)
+				{
+					if (ok)
+					{
+						gridTab.dataDelete();
+						gridTab.dataRefresh(true);
+//						gridPanel.setStatusLine(count + " Record(s) deleted.", false, true);
+					}
+
+					// if all records is deleted then it will show default with new
+					// record.
+					if (gridTab.getRowCount() <= 0)
+						gridPanel.createNewLine();
+					gridPanel.updateListIndex();
+				}
+			});
 
 		}
 	}

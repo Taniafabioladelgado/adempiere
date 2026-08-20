@@ -48,6 +48,8 @@ import org.zkoss.zul.Window;
  */
 public class WLogin extends AbstractUIPart
 {
+	private static final boolean SHOW_LOGIN_AUXILIARY_PANELS = false;
+
 	private Borderlayout layout;
 	private Window browserWarningWindow;
 	private LoginWindow loginWindow;
@@ -67,8 +69,6 @@ public class WLogin extends AbstractUIPart
         Center center = new Center();
         center.setParent(layout);
         center.setBorder("none");
-        center.setVflex("1");
-        center.setHflex("1");
         center.setAutoscroll(true);
         center.setStyle("border: none; background-color: transparent;");
 
@@ -97,6 +97,9 @@ public class WLogin extends AbstractUIPart
         	browserWarningWindow.setPage(page);
         	browserWarningWindow.doOverlapped();
         }
+
+        if (!SHOW_LOGIN_AUXILIARY_PANELS)
+        	return layout;
         
         try {
         	String right = ThemeManager.getLoginRightPanel();

@@ -1,19 +1,4 @@
-/******************************************************************************
- * Copyright (C) 2010 Carlos Ruiz                                             *
- * Copyright (C) 2009 Quality Systems & Solutions - globalqss                 *
- * This program is free software; you can redistribute it and/or modify it    *
- * under the terms version 2 of the GNU General Public License as published   *
- * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
- * See the GNU General Public License for more details.                       *
- * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
- *****************************************************************************/
-
 package org.adempiere.webui;
-
 
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Desktop;
@@ -23,47 +8,52 @@ import org.zkoss.zk.ui.sys.IdGenerator;
 
 public class SahiIdGenerator_v1 implements IdGenerator {
 
+    private static final String ID_NUM = "Id_Num";
+
     @Override
     public String nextComponentUuid(Desktop desktop, Component comp, ComponentInfo compInfo) {
 
-        int i = Integer.parseInt(desktop.getAttribute("Id_Num").toString());
-        i++; // Start from 1
-
-        String id = (String) comp.getAttribute("zk_component_ID");
-
-        // Have to check for uniqueness or software will hang
-        if (id != null && id.length() > 0)
-        {
-            if (desktop.getComponentByUuidIfAny(id) != null)
-            {
-                desktop.setAttribute("Id_Num", String.valueOf(i));
-                return id + "_" + i;
-            }
-            else
-            {
-                return id;
-            }
+        if (desktop == null) {
+            return null;
         }
 
-        String prefix = (String) comp.getAttribute("zk_component_prefix");
+        int i = getNextIdNumber(desktop);
 
-        if (prefix == null || prefix.length() == 0)
-            prefix = "zk_comp_";
+        if (comp != null) {
+            String id = (String) comp.getAttribute("zk_component_ID");
 
-        desktop.setAttribute("Id_Num", String.valueOf(i));
-        return prefix + i;
+            if (id != null && id.length() > 0) {
+                if (desktop.getComponentByUuidIfAny(id) != null) {
+                    desktop.setAttribute(ID_NUM, String.valueOf(i));
+                    return id + "_" + i;
+                }
+                return id;
+            }
+
+            String prefix = (String) comp.getAttribute("zk_component_prefix");
+
+            if (prefix == null || prefix.length() == 0) {
+                prefix = "zk_comp_";
+            }
+
+            desktop.setAttribute(ID_NUM, String.valueOf(i));
+            return prefix + i;
+        }
+
+        desktop.setAttribute(ID_NUM, String.valueOf(i));
+        return "zk_comp_" + i;
     }
 
     @Override
     public String nextAnonymousComponentUuid(Component comp, ComponentInfo compInfo) {
-        return nextComponentUuid(comp.getDesktop(), comp, compInfo);
+        Desktop desktop = comp != null ? comp.getDesktop() : null;
+        return nextComponentUuid(desktop, comp, compInfo);
     }
 
     @Override
     public String nextDesktopId(Desktop desktop) {
-        if (desktop.getAttribute("Id_Num") == null) {
-            String number = "0";
-            desktop.setAttribute("Id_Num", number);
+        if (desktop != null && desktop.getAttribute(ID_NUM) == null) {
+            desktop.setAttribute(ID_NUM, "0");
         }
 
         return null;
@@ -72,5 +62,20 @@ public class SahiIdGenerator_v1 implements IdGenerator {
     @Override
     public String nextPageUuid(Page page) {
         return null;
+    }
+
+    private int getNextIdNumber(Desktop desktop) {
+        Object value = desktop.getAttribute(ID_NUM);
+
+        int i = 0;
+        if (value != null) {
+            try {
+                i = Integer.parseInt(value.toString());
+            } catch (NumberFormatException e) {
+                i = 0;
+            }
+        }
+
+        return i + 1;
     }
 }
